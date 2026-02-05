@@ -2,10 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=0.5">
     <title>Pokemon Clicker Game</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FontAwesome подключен неправильно -->
 </head>
 <body>
     <div class="game-container">
@@ -22,8 +22,8 @@
                 <div class="stat-box">
                     <i class="fas fa-arrow-alt-circle-up"></i>
                     <span class="stat-label">Следующий уровень через:</span>
-                    <span class="stat-value" id="next-level">10</span>
-                    <span style="font-size: 14px; color: rgba(255,255,255,0.8)"> очков</span>
+                    <span class="stat-value" id="next-level">100</span>
+                    <span> очков</span>
                 </div>
             </div>
         </header>
@@ -31,16 +31,18 @@
         <main class="game-main">
             <section class="pokemon-display">
                 <div class="image-frame">
-                    <img src="images/1.png" alt="Пикачу" class="pokemon-image" id="main-pokemon">
+                    <!-- ПРАВИЛЬНЫЙ путь к изображению -->
+                    <img src="images/1.png" alt="Покемон" class="pokemon-image" id="main-pokemon">
                 </div>
                 <div class="pokemon-info">
-                    <h3 id="pokemon-name">Пикачу</h3>
-                    <p id="pokemon-description">Нажми на кнопку чтобы заработать очки и открыть новых покемонов!</p>
+                    <h3 id="pokemon-name">Загрузка...</h3>
+                    <p id="pokemon-description">Кликай чтобы открыть!</p>
                 </div>
             </section>
 
             <section class="controls">
                 <div class="clicker-area">
+                    <!-- Кнопка без стилей -->
                     <button class="click-button" id="click-btn">
                         Нажми меня!
                     </button>
@@ -52,28 +54,25 @@
 
                 <div class="progress-section">
                     <h4>Прогресс до следующего покемона:</h4>
+                    <!-- Прогресс-бар сломан -->
                     <div class="progress-container">
                         <div class="progress-track">
-                            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                            <div class="progress-fill" style="width: 0%"></div>
                         </div>
                         <span class="progress-text" id="progress-percent">0%</span>
                     </div>
                     <p class="progress-info" id="progress-info">
-                        0 из 10 очков
+                        0 из 100 очков
                     </p>
                 </div>
             </section>
         </main>
 
         <footer class="game-footer">
-            <p>Игра Pokemon Clicker Adventure | Открывайте новых покемонов кликая по кнопке!</p>
-            <p style="font-size: 12px; margin-top: 10px; color: #8f9ba8;">
-                Для тестирования: откройте консоль (F12) и используйте команду cheat(число)
-            </p>
+        
         </footer>
     </div>
-    
-    <script src="sound-generator.js"></script>
+
     <script src="script.js"></script>
 </body>
 </html>
