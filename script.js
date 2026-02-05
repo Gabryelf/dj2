@@ -1,13 +1,13 @@
 // Глобальные переменные
-var score = "0";
-var imageIndex = 1;
+let score = 0;
+let imageIndex = 0;
 const thresholds = [10, 25, 50, 100, 200];
 const pokemonImages = [
-    "./images/1.png",
+    "images/1.png",
     "images/2.png",
-    "/images/3.png",
+    "images/3.png",
     "images/4.png",
-    "images/5.jpg",
+    "images/5.png",
     "images/6.png"
 ];
 const pokemonNames = [
@@ -15,17 +15,26 @@ const pokemonNames = [
     "Чармандер",
     "Сквиртл",
     "Бульбазавр",
-    "Джигглипафф",
+    "Иви",
     "Мяут"
+];
+const pokemonDescriptions = [
+    "Электрический покемон. Милый и дружелюбный!",
+    "Огненный покемон. Любит тренироваться!",
+    "Водный покемон. Отличный пловец!",
+    "Травяной покемон. Очень сильный и выносливый!",
+    "Нормальный покемон. Может эволюционировать в разных покемонов!",
+    "Нормальный покемон. Любит блестящие предметы!"
 ];
 
 // Получение элементов DOM
-const scoreElement = document.querySelector('#current-score');
-const nextLevelElement = document.querySelector('#next-level');
-const pokemonImage = document.getElementById('pokemon-img'); // Ошибка в ID
+const scoreElement = document.getElementById('current-score');
+const nextLevelElement = document.getElementById('next-level');
+const pokemonImage = document.getElementById('main-pokemon');
 const pokemonNameElement = document.getElementById('pokemon-name');
-const clickButton = document.getElementById('click-button'); // Ошибка в ID
-const progressFill = document.querySelector('.progress-fill');
+const pokemonDescriptionElement = document.getElementById('pokemon-description');
+const clickButton = document.getElementById('click-btn');
+const progressFill = document.getElementById('progress-fill');
 const progressPercent = document.getElementById('progress-percent');
 const progressInfo = document.getElementById('progress-info');
 
@@ -38,8 +47,7 @@ function initializeGame() {
 
 // Функция обработки клика
 function handleClick() {
-    console.log("Клик зарегистрирован");
-    score = score + 1; // Ошибка сложения строки и числа
+    score++;
     updateDisplay();
     checkLevelUp();
     createClickEffect();
@@ -48,11 +56,11 @@ function handleClick() {
 // Функция обновления дисплея
 function updateDisplay() {
     // Обновление счета
-    document.getElementById('current-score').innerText = score;
+    scoreElement.textContent = score;
     
     // Расчет прогресса
     let nextThreshold = thresholds[imageIndex] || 999;
-    let progress = (score / nextThreshold) * 100;
+    let progress = Math.min((score / nextThreshold) * 100, 100);
     
     // Обновление прогресс-бара
     if (progressFill) {
@@ -61,39 +69,72 @@ function updateDisplay() {
     
     // Обновление текста прогресса
     if (progressPercent) {
-        progressPercent.innerText = Math.round(progress) + "%";
+        progressPercent.textContent = Math.round(progress) + "%";
     }
     
     if (progressInfo) {
-        progressInfo.innerText = score + " из " + nextThreshold + " очков";
+        progressInfo.textContent = score + " из " + nextThreshold + " очков";
     }
     
     // Обновление следующего уровня
     if (nextLevelElement) {
-        nextLevelElement.innerText = nextThreshold;
+        nextLevelElement.textContent = nextThreshold;
     }
 }
 
 // Функция проверки повышения уровня
 function checkLevelUp() {
-    if (imageIndex < thresholds.length) {
-        if (score >= thresholds[imageIndex]) {
-            imageIndex++;
-            changePokemon();
-            alert("Новый покемон открыт!");
-        }
+    if (imageIndex < thresholds.length && score >= thresholds[imageIndex]) {
+        imageIndex++;
+        changePokemon();
+        
+        // Создаем эффект при открытии нового покемона
+        const celebration = document.createElement('div');
+        celebration.textContent = '🎉 Новый покемон открыт! 🎉';
+        celebration.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            z-index: 1000;
+            animation: slideDown 0.5s ease-out;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 65, 108, 0.4);
+        `;
+        document.body.appendChild(celebration);
+        
+        setTimeout(() => {
+            celebration.style.animation = 'slideUp 0.5s ease-out forwards';
+            setTimeout(() => celebration.remove(), 500);
+        }, 2000);
     }
 }
 
-// Функция смены покемона
 function changePokemon() {
     if (imageIndex < pokemonImages.length) {
-        // pokemonImage.src = pokemonImages[imageIndex]; // pokemonImage undefined
+        const nextImageIndex = Math.min(imageIndex, pokemonImages.length - 1);
+        pokemonImage.src = pokemonImages[nextImageIndex];
+        pokemonImage.alt = pokemonNames[nextImageIndex];
+        
         if (pokemonNameElement) {
-            pokemonNameElement.innerText = pokemonNames[imageIndex] || "Неизвестный";
+            pokemonNameElement.textContent = pokemonNames[nextImageIndex];
         }
+        
+        if (pokemonDescriptionElement) {
+            pokemonDescriptionElement.textContent = pokemonDescriptions[nextImageIndex];
+        }
+        
+        pokemonImage.style.animation = 'none';
+        setTimeout(() => {
+            pokemonImage.style.animation = 'pulse 0.5s ease';
+        }, 10);
     }
 }
+
 
 // Эта функция проверяет доступность звукового генератора
 function initSoundSystem() {
@@ -116,53 +157,84 @@ function initSoundSystem() {
 }
 
 // Функция создания эффекта клика
+
 function createClickEffect() {
     const effect = document.createElement('div');
     effect.className = 'click-effect';
     effect.textContent = '+1';
-    effect.style.position = 'fixed';
-    effect.style.color = '#ff0000';
-    effect.style.fontSize = '50px';
-    effect.style.left = '50%';
-    effect.style.top = '50%';
+    
+    const rect = clickButton.getBoundingClientRect();
+    effect.style.left = rect.left + rect.width / 2 + 'px';
+    effect.style.top = rect.top + 'px';
+    
     document.body.appendChild(effect);
     
-    // Удаление эффекта через 2 секунды
-    setTimeout(function() {
+    setTimeout(() => {
         effect.remove();
-    }, 2000);
+    }, 1000);
 }
 
-// Функция для быстрого тестирования (чит)
 function addPoints(points) {
-    score = points;
-    updateDisplay();
-    checkLevelUp();
+    const newScore = parseInt(points);
+    if (!isNaN(newScore) && newScore > 0) {
+        score += newScore;
+        updateDisplay();
+        checkLevelUp();
+    }
 }
 
-// Обработчики событий
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM загружен");
     
-    // Неправильный ID кнопки
-    const btn = document.getElementById('click-btn');
-    if (btn) {
-        btn.onclick = handleClick;
-    }
+    clickButton.addEventListener('click', handleClick);
     
-    // Обработчик клавиатуры не работает
-    document.onkeydown = function(event) {
+    document.addEventListener('keydown', function(event) {
         if (event.code === 'Space') {
-            console.log("Пробел нажат");
+            event.preventDefault();
+            handleClick();
+            
+            clickButton.classList.add('active');
+            setTimeout(() => clickButton.classList.remove('active'), 100);
         }
-    };
+    });
     
-    // Инициализация игры
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes slideDown {
+            from { top: -100px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { top: 20px; opacity: 1; }
+            to { top: -100px; opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    
     initializeGame();
+    
+    console.log("Готово! Для тестирования используйте команду cheat(число) в консоли");
 });
 
-// Глобальная функция для консоли
 window.cheat = function(points) {
     addPoints(points);
-    alert("Добавлено " + points + " очков!");
+    console.log(`Добавлено ${points} очков! Текущий счет: ${score}`);
 };
+
+console.log("Pokemon Clicker Game загружен!");
+console.log("Доступные команды в консоли:");
+console.log("  cheat(число) - добавить очки");
+console.log("  score - текущий счет (в консоли)");
+Object.defineProperty(window, 'score', {
+    get: function() { return score; },
+    set: function(value) { 
+        score = value; 
+        updateDisplay();
+        checkLevelUp();
+    }
+});
