@@ -118,6 +118,42 @@ body {
     gap: 20px;
 }
 
+/* Добавьте в style.css */
+
+.pokeball-item canvas {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.team-slot canvas {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid var(--secondary-color);
+    object-fit: cover;
+}
+
+.pokemon-card canvas {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 15px;
+    transition: transform 0.3s ease;
+    image-rendering: pixelated;
+}
+
+.enemy-img canvas {
+    width: 250px;
+    height: 250px;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+}
+
+.pokeball-canvas {
+    image-rendering: pixelated;
+}
+
 /* Шапка */
 header {
     display: flex;

@@ -1,19 +1,22 @@
 // ==============================
-// ГЛАВНЫЙ КЛАСС ИГРЫ (обновленный)
+// ГЛАВНЫЙ КЛАСС ИГРЫ
 // ==============================
 
 class PokemonClickerGame {
     constructor() {
-        // Инициализация систем
+        // Системы
         this.saveManager = new SaveManager();
-        this.pokemonManager = new PokemonManager();
-        this.shopSystem = new ShopSystem(this.pokemonManager);
-        this.battleSystem = new BattleSystem(this.pokemonManager);
-        this.uiManager = new UIManager(this);
+        this.pokemonManager = null; // Инициализируем после загрузки атласов
+        this.shopSystem = null;
+        this.battleSystem = null;
+        this.uiManager = null;
         this.animationManager = new AnimationManager();
-        this.tutorialSystem = null; // Инициализируем позже
+        this.tutorialSystem = null;
         
-        // Состояние игры
+        // Атлас менеджер
+        this.atlasManager = null;
+        
+        // Состояние
         this.gameState = null;
         this.isInitialized = false;
         
@@ -22,50 +25,62 @@ class PokemonClickerGame {
         this.autoSaveInterval = null;
     }
     
-    // Инициализация игры
     async init() {
         console.log('🚀 Инициализация Pokemon Clicker Game...');
         
         try {
-            // Загружаем сохранение
+            // 1. Инициализируем атласы
+            this.atlasManager = GameUtils.initAtlases(GAME_CONFIG);
+            
+            // 2. Ждем загрузки всех атласов
+            await this.atlasManager.waitForAll();
+            console.log('✅ Все атласы загружены!');
+            
+            // 3. Загружаем сохранение
             this.loadGame();
             
-            // Инициализируем системы
+            // 4. Инициализируем системы с атласами
+            this.pokemonManager = new PokemonManager(this.atlasManager);
+            this.shopSystem = new ShopSystem(this.pokemonManager, this.atlasManager, this); // Передаем this
+            this.battleSystem = new BattleSystem(this.pokemonManager, this, this.atlasManager);
+            this.uiManager = new UIManager(this, this.atlasManager);
+            
+            // 5. Инициализируем UI
             this.animationManager.initCSSAnimations();
             this.uiManager.initEventListeners();
-            this.uiManager.updateUI();
             
-            // Инициализируем туториал
+            // 6. Инициализируем туториал
             this.tutorialSystem = new TutorialSystem(this);
             
-            // Создаем первого противника, если нет
+            // 7. Создаем первого противника
             if (!this.battleSystem.currentEnemy) {
                 this.battleSystem.createNewEnemy();
-                this.battleSystem.updateUI();
             }
             
-            // Блокируем кнопку атаки до завершения туториала
+            // 8. Обновляем UI
+            this.uiManager.updateUI();
+            
+            // 9. Запускаем таймеры
+            this.startEnergyRestore();
+            this.startAutoSave();
+            
+            // 10. Блокируем кнопку атаки до завершения туториала
             const attackButton = document.getElementById('attack-button');
             if (attackButton) {
                 attackButton.disabled = true;
             }
             
-            // Запускаем восстановление энергии
-            this.startEnergyRestore();
-            
-            // Запускаем автосохранение
-            this.startAutoSave();
-            
-            // Инициализируем звуковую систему
+            // 11. Инициализируем звуки
             if (typeof GameSoundGenerator !== 'undefined') {
                 GameSoundGenerator.init();
-                
-                // Активируем звуки после первого клика
                 document.addEventListener('click', function activateSound() {
                     GameSoundGenerator.activate();
                     document.removeEventListener('click', activateSound);
                 }, { once: true });
             }
+            
+            // 12. Обновляем изображения покеболов
+            await GameUtils.updatePokeballImages(this.atlasManager, GAME_CONFIG);
             
             this.isInitialized = true;
             console.log('✅ Игра успешно инициализирована!');
@@ -73,52 +88,67 @@ class PokemonClickerGame {
         } catch (error) {
             console.error('❌ Ошибка инициализации игры:', error);
         }
+
+                // После await this.atlasManager.waitForAll();
+        console.log('✅ Все атласы загружены!');
+        GameUtils.debugAtlases(this.atlasManager); // Добавьте эту строку
     }
     
-    // Загрузка игры
     loadGame() {
         this.gameState = this.saveManager.load();
         
-        // Проверяем, проходил ли игрок туториал
+        // Восстанавливаем состояние
+        if (this.shopSystem) {
+            this.shopSystem.setMoney(this.gameState.money);
+            this.shopSystem.pokeballs = { ...this.gameState.pokeballs };
+        }
+        
+        if (this.pokemonManager) {
+            this.pokemonManager.collection = [...this.gameState.collection];
+            this.pokemonManager.team = [...this.gameState.team];
+            this.pokemonManager.maxTeamSize = this.gameState.maxTeamSize;
+        }
+        
+        if (this.battleSystem && this.gameState.currentEnemy) {
+            this.battleSystem.enemyLevel = this.gameState.currentEnemy.level;
+        }
+        
         const hasCompletedTutorial = localStorage.getItem('pokemon_tutorial_completed');
-        
-        // Восстанавливаем состояние из сохранения
-        this.shopSystem.setMoney(this.gameState.money);
-        this.shopSystem.pokeballs = { ...this.gameState.pokeballs };
-        this.pokemonManager.collection = [...this.gameState.collection];
-        this.pokemonManager.team = [...this.gameState.team];
-        this.pokemonManager.maxTeamSize = this.gameState.maxTeamSize;
-        this.battleSystem.enemyLevel = this.gameState.currentEnemy.level;
-        
-        // Если игрок прошел туториал, но в сохранении нет покемонов,
-        // добавляем начального покемона
-        if (hasCompletedTutorial && this.pokemonManager.collection.length === 0) {
+        if (hasCompletedTutorial && this.pokemonManager && this.pokemonManager.collection.length === 0) {
             this.addStarterPokemon();
         }
         
-        // Восстанавливаем команду покемонов
-        for (const pokemon of this.pokemonManager.collection) {
-            pokemon.isInTeam = this.pokemonManager.team.some(p => p.id === pokemon.id);
+        if (this.pokemonManager) {
+            for (const pokemon of this.pokemonManager.collection) {
+                pokemon.isInTeam = this.pokemonManager.team.some(p => p.id === pokemon.id);
+            }
         }
     }
     
-    // Добавляет стартового покемона
+    // В game.js, метод addStarterPokemon
     addStarterPokemon() {
-        // Добавляем случайного обычного покемона
-        const starterPokemonIds = [1, 2]; // Раттата и Пиджи
+        // Добавляем случайного обычного покемона (Раттата или Пиджи)
+        const starterPokemonIds = [1, 2]; // ID из конфига
         const randomId = starterPokemonIds[Math.floor(Math.random() * starterPokemonIds.length)];
+        
         const pokemon = this.pokemonManager.addToCollection(randomId);
         
         if (pokemon) {
             // Автоматически добавляем в команду
-            this.pokemonManager.addToTeam(pokemon.id);
-            console.log('🎁 Добавлен стартовый покемон:', pokemon.name);
+            const result = this.pokemonManager.addToTeam(pokemon.id);
+            if (result.success) {
+                console.log('🎁 Добавлен стартовый покемон:', pokemon.name);
+                
+                // Разблокируем кнопку атаки
+                const attackButton = document.getElementById('attack-button');
+                if (attackButton) {
+                    attackButton.disabled = false;
+                }
+            }
         }
     }
     
-    // Сохранение игры
     saveGame() {
-        // Обновляем состояние игры
         this.gameState.money = this.shopSystem.money;
         this.gameState.pokeballs = { ...this.shopSystem.pokeballs };
         this.gameState.collection = [...this.pokemonManager.collection];
@@ -134,19 +164,15 @@ class PokemonClickerGame {
             };
         }
         
-        // Сохраняем
         return this.saveManager.save(this.gameState);
     }
     
-    // Ручная атака (с проверкой туториала)
     manualAttack() {
-        // Проверяем, активен ли туториал
         if (this.tutorialSystem && this.tutorialSystem.isTutorialActive) {
             this.showNotification('Заверши обучение сначала!', 'warning');
             return;
         }
         
-        // Проверяем, есть ли покемоны в команде
         if (this.pokemonManager.team.length === 0) {
             this.showNotification('Добавь покемонов в команду для атаки!', 'warning');
             this.uiManager.showModal('team');
@@ -155,7 +181,6 @@ class PokemonClickerGame {
         
         const result = this.battleSystem.attackEnemy();
         
-        // Создаем эффект урона
         if (result.damage > 0) {
             const button = document.getElementById('attack-button');
             if (button) {
@@ -171,23 +196,19 @@ class PokemonClickerGame {
                 );
             }
             
-            // Проигрываем звук атаки
             if (typeof GameSoundGenerator !== 'undefined') {
                 GameSoundGenerator.playAttack();
             }
         }
         
-        // Если противник побежден
         if (result.defeated && result.reward) {
             this.shopSystem.addMoney(result.reward);
             this.showNotification(`Победа! +${result.reward} поке-баксов`, 'success');
             
-            // Проигрываем звук победы
             if (typeof GameSoundGenerator !== 'undefined') {
                 GameSoundGenerator.playVictory();
             }
             
-            // Анимация смены противника
             if (result.enemy) {
                 this.animationManager.animateEnemyChange(
                     result.enemy,
@@ -196,19 +217,14 @@ class PokemonClickerGame {
             }
         }
         
-        // Обновляем UI
         this.uiManager.updateUI();
-        
-        // Сохраняем игру
         this.saveGame();
     }
     
-    // Добавление покемона в команду
     addToTeam(pokemonId) {
         const result = this.pokemonManager.addToTeam(pokemonId);
         
         if (result.success) {
-            // Если это первый покемон в команде, включаем кнопку атаки
             if (this.pokemonManager.team.length === 1) {
                 const attackButton = document.getElementById('attack-button');
                 if (attackButton) {
@@ -226,7 +242,6 @@ class PokemonClickerGame {
         return result;
     }
     
-    // Удаление покемона из команды
     removeFromTeam(pokemonId) {
         const pokemon = this.pokemonManager.getPokemonById(pokemonId);
         const removed = this.pokemonManager.removeFromTeam(pokemonId);
@@ -238,7 +253,6 @@ class PokemonClickerGame {
                 this.showNotification(`${pokemon.name} удален из команды`, 'info');
             }
             
-            // Если команда пуста, блокируем кнопку атаки
             if (this.pokemonManager.team.length === 0) {
                 const attackButton = document.getElementById('attack-button');
                 if (attackButton) {
@@ -250,7 +264,6 @@ class PokemonClickerGame {
         return removed;
     }
     
-    // Показать уведомление
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
@@ -267,7 +280,6 @@ class PokemonClickerGame {
         if (container) {
             container.appendChild(notification);
             
-            // Автоматически удаляем через 5 секунд
             setTimeout(() => {
                 notification.style.animation = 'slideOutRight 0.3s ease';
                 setTimeout(() => {
@@ -279,7 +291,6 @@ class PokemonClickerGame {
         }
     }
     
-    // Запуск восстановления энергии
     startEnergyRestore() {
         if (this.energyRestoreInterval) {
             clearInterval(this.energyRestoreInterval);
@@ -287,14 +298,12 @@ class PokemonClickerGame {
         
         this.energyRestoreInterval = setInterval(() => {
             this.pokemonManager.restoreEnergy();
-            // Обновляем только если есть изменения в энергии
             if (this.pokemonManager.collection.some(p => !p.isInTeam && p.energy < p.maxEnergy)) {
                 this.uiManager.updateUI();
             }
         }, 1000);
     }
     
-    // Запуск автосохранения
     startAutoSave() {
         if (this.autoSaveInterval) {
             clearInterval(this.autoSaveInterval);
@@ -306,41 +315,32 @@ class PokemonClickerGame {
         }, GAME_CONFIG.AUTO_SAVE_INTERVAL);
     }
     
-    // Очистка ресурсов
     cleanup() {
-        // Останавливаем все интервалы
         if (this.energyRestoreInterval) {
             clearInterval(this.energyRestoreInterval);
         }
         if (this.autoSaveInterval) {
             clearInterval(this.autoSaveInterval);
         }
-        if (this.battleSystem.autoAttackInterval) {
+        if (this.battleSystem && this.battleSystem.autoAttackInterval) {
             clearInterval(this.battleSystem.autoAttackInterval);
         }
         
-        // Сохраняем игру
         this.saveGame();
     }
 }
 
-// ==============================
-// ЗАПУСК ИГРЫ
-// ==============================
-
-// Создаем и запускаем игру при загрузке страницы
+// Запуск игры
 let game;
 
 window.addEventListener('load', async () => {
     game = new PokemonClickerGame();
     await game.init();
     
-    // Сохраняем игру при закрытии страницы
     window.addEventListener('beforeunload', () => {
         game.cleanup();
     });
     
-    // Горячие клавиши
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {
             e.preventDefault();
@@ -349,6 +349,5 @@ window.addEventListener('load', async () => {
     });
 });
 
-// Экспортируем игру для отладки
 window.Game = PokemonClickerGame;
 window.gameInstance = game;

@@ -3,65 +3,53 @@
 // ==============================
 
 class PokemonManager {
-    constructor() {
+    constructor(atlasManager) {
+        this.atlasManager = atlasManager;
         this.collection = [];
         this.team = [];
         this.maxTeamSize = GAME_CONFIG.MAX_TEAM_SIZE;
-        this.pokemonTemplates = GAME_CONFIG.POKEMON_IMAGES;
     }
     
-    // Генерирует нового покемона по ID
-    generatePokemon(pokemonId) {
-        const template = this.pokemonTemplates[pokemonId];
-        if (!template) return null;
+    addToCollection(pokemonId) {
+        const pokemonData = GAME_CONFIG.POKEMON_SPRITES[pokemonId];
+        if (!pokemonData) return null;
         
-        const rarity = GAME_CONFIG.RARITIES[template.rarity];
-        
-        return {
+        const newPokemon = {
             id: pokemonId,
-            name: template.name,
-            rarity: template.rarity,
-            types: template.types,
-            baseDamage: template.baseDamage,
-            currentDamage: template.baseDamage * rarity.damageMultiplier,
+            name: pokemonData.name,
+            types: [...pokemonData.types],
+            rarity: pokemonData.rarity,
+            baseDamage: pokemonData.baseDamage,
             level: 1,
-            experience: 0,
-            maxExperience: 100,
-            image: template.image,
+            currentDamage: pokemonData.baseDamage * GAME_CONFIG.RARITIES[pokemonData.rarity].damageMultiplier,
             energy: GAME_CONFIG.MAX_ENERGY,
             maxEnergy: GAME_CONFIG.MAX_ENERGY,
             isInTeam: false,
-            obtainedAt: Date.now()
+            atlasX: pokemonData.atlasX,
+            atlasY: pokemonData.atlasY
         };
-    }
-    
-    // Добавляет покемона в коллекцию
-    addToCollection(pokemonData) {
-        const pokemon = this.generatePokemon(pokemonData.id || pokemonData);
-        if (pokemon) {
-            this.collection.push(pokemon);
-            return pokemon;
-        }
-        return null;
-    }
-    
-    // Добавляет покемона в команду
-    addToTeam(pokemonId) {
-        if (this.team.length >= this.maxTeamSize) {
-            return { success: false, message: 'Команда полна!' };
-        }
         
-        const pokemon = this.collection.find(p => p.id === pokemonId);
+        this.collection.push(newPokemon);
+        return newPokemon;
+    }
+    
+    addToTeam(pokemonId) {
+        const pokemon = this.getPokemonById(pokemonId);
+        
         if (!pokemon) {
-            return { success: false, message: 'Покемон не найден!' };
+            return { success: false, message: 'Покемон не найден' };
         }
         
         if (pokemon.isInTeam) {
-            return { success: false, message: 'Покемон уже в команде!' };
+            return { success: false, message: 'Покемон уже в команде' };
+        }
+        
+        if (this.team.length >= this.maxTeamSize) {
+            return { success: false, message: 'Команда заполнена' };
         }
         
         if (pokemon.energy <= 0) {
-            return { success: false, message: 'У покемона нет энергии!' };
+            return { success: false, message: 'У покемона нет энергии' };
         }
         
         pokemon.isInTeam = true;
@@ -70,118 +58,58 @@ class PokemonManager {
         return { success: true, pokemon };
     }
     
-    // Удаляет покемона из команды
     removeFromTeam(pokemonId) {
-        const pokemonIndex = this.team.findIndex(p => p.id === pokemonId);
-        if (pokemonIndex !== -1) {
-            const pokemon = this.team[pokemonIndex];
-            pokemon.isInTeam = false;
-            this.team.splice(pokemonIndex, 1);
-            return true;
-        }
-        return false;
+        const index = this.team.findIndex(p => p.id === pokemonId);
+        
+        if (index === -1) return false;
+        
+        const pokemon = this.team[index];
+        pokemon.isInTeam = false;
+        this.team.splice(index, 1);
+        
+        return true;
     }
     
-    // Получает общий урон команды
+    getPokemonById(pokemonId) {
+        return this.collection.find(p => p.id === pokemonId);
+    }
+    
     getTeamDamage() {
-        let totalDamage = 0;
-        for (const pokemon of this.team) {
-            if (pokemon.energy > 0) {
-                totalDamage += pokemon.currentDamage;
-            }
-        }
-        return totalDamage;
+        return this.team.reduce((sum, pokemon) => sum + pokemon.currentDamage, 0);
     }
     
-    // Наносит урон (тратит энергию)
-    applyDamage() {
-        for (const pokemon of this.team) {
-            if (pokemon.energy > 0) {
-                pokemon.energy -= GAME_CONFIG.ENERGY_DECAY_PER_ATTACK;
-                
-                // Если энергия закончилась, убираем из команды
-                if (pokemon.energy <= 0) {
-                    pokemon.energy = 0;
-                    pokemon.isInTeam = false;
-                    this.team = this.team.filter(p => p.id !== pokemon.id);
-                    this.showNotification(`${pokemon.name} устал и вернулся в коллекцию!`, 'warning');
-                }
-            }
-        }
-    }
-    
-    // Восстанавливает энергию всем покемонам вне команды
     restoreEnergy() {
-        for (const pokemon of this.collection) {
+        this.collection.forEach(pokemon => {
             if (!pokemon.isInTeam && pokemon.energy < pokemon.maxEnergy) {
                 pokemon.energy = Math.min(
                     pokemon.maxEnergy,
                     pokemon.energy + GAME_CONFIG.ENERGY_RESTORE_PER_SECOND
                 );
             }
-        }
+        });
     }
     
-    // Получает покемона по ID
-    getPokemonById(id) {
-        return this.collection.find(p => p.id === id);
-    }
-    
-    // Получает всех покемонов определенной редкости
-    getPokemonsByRarity(rarity) {
-        return this.collection.filter(p => p.rarity === rarity);
-    }
-    
-    // Улучшает покемона
-    levelUpPokemon(pokemonId) {
-        const pokemon = this.getPokemonById(pokemonId);
-        if (!pokemon) return false;
+    useEnergy() {
+        let totalDamage = 0;
         
-        pokemon.level++;
-        pokemon.currentDamage *= 1.1; // +10% урона за уровень
-        pokemon.experience = 0;
-        pokemon.maxExperience = Math.floor(pokemon.maxExperience * 1.5);
+        this.team.forEach(pokemon => {
+            if (pokemon.energy > 0) {
+                pokemon.energy = Math.max(0, pokemon.energy - GAME_CONFIG.ENERGY_DECAY_PER_ATTACK);
+                totalDamage += pokemon.currentDamage;
+            }
+        });
         
-        return true;
-    }
-    
-    // Добавляет опыт покемону
-    addExperience(pokemonId, exp) {
-        const pokemon = this.getPokemonById(pokemonId);
-        if (!pokemon) return false;
+        // Убираем из команды покемонов без энергии
+        this.team = this.team.filter(pokemon => {
+            if (pokemon.energy <= 0) {
+                pokemon.isInTeam = false;
+                return false;
+            }
+            return true;
+        });
         
-        pokemon.experience += exp;
-        if (pokemon.experience >= pokemon.maxExperience) {
-            this.levelUpPokemon(pokemonId);
-            this.showNotification(`${pokemon.name} достиг уровня ${pokemon.level}!`, 'info');
-        }
-        
-        return true;
-    }
-    
-    // Восстанавливает энергию покемона
-    restorePokemonEnergy(pokemonId) {
-        const pokemon = this.getPokemonById(pokemonId);
-        if (!pokemon) return false;
-        
-        pokemon.energy = pokemon.maxEnergy;
-        return true;
-    }
-    
-    // Уведомление
-    showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.transition = 'opacity 0.3s';
-            notification.style.opacity = '0';
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
+        return totalDamage;
     }
 }
 
-// Экспорт менеджера покемонов
 window.PokemonManager = PokemonManager;

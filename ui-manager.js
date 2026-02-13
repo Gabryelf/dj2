@@ -3,13 +3,13 @@
 // ==============================
 
 class UIManager {
-    constructor(game) {
+    constructor(game, atlasManager) {
         this.game = game;
+        this.atlasManager = atlasManager;
         this.modals = {};
         this.initModals();
     }
     
-    // Инициализация модальных окон
     initModals() {
         const modals = ['pokeball', 'collection', 'shop', 'team'];
         
@@ -18,7 +18,6 @@ class UIManager {
             if (modal) {
                 this.modals[modalName] = modal;
                 
-                // Закрытие по клику на крестик
                 const closeBtn = modal.querySelector('.close');
                 if (closeBtn) {
                     closeBtn.addEventListener('click', () => {
@@ -26,14 +25,12 @@ class UIManager {
                     });
                 }
                 
-                // Закрытие по клику вне окна
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
                         modal.style.display = 'none';
                     }
                 });
                 
-                // Предотвращаем закрытие при клике внутри контента
                 const modalContent = modal.querySelector('.modal-content');
                 if (modalContent) {
                     modalContent.addEventListener('click', (e) => {
@@ -44,13 +41,11 @@ class UIManager {
         });
     }
     
-    // Показывает модальное окно
     showModal(modalName) {
         const modal = this.modals[modalName];
         if (modal) {
             modal.style.display = 'block';
             
-            // Обновляем содержимое
             switch(modalName) {
                 case 'pokeball':
                     this.game.shopSystem.createPokeballUI();
@@ -68,7 +63,6 @@ class UIManager {
         }
     }
     
-    // Создает UI коллекции
     createCollectionUI() {
         const collectionGrid = document.getElementById('collection-grid');
         if (!collectionGrid) return;
@@ -78,7 +72,7 @@ class UIManager {
         const collection = this.game.pokemonManager.collection;
         
         if (collection.length === 0) {
-            collectionGrid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">Коллекция пуста! Откройте покеболы в магазине.</p>';
+            collectionGrid.innerHTML = '<div class="empty-collection"><i class="fas fa-box-open"></i><p>Коллекция пуста! Откройте покеболы в магазине.</p></div>';
             return;
         }
         
@@ -90,8 +84,23 @@ class UIManager {
             const rarity = GAME_CONFIG.RARITIES[pokemon.rarity];
             const energyPercent = (pokemon.energy / pokemon.maxEnergy) * 100;
             
+            // Создаем canvas для покемона
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            canvas.className = 'pokemon-canvas';
+            
+            GameUtils.drawPokemon(
+                canvas.getContext('2d'),
+                this.atlasManager,
+                pokemon.id,
+                GAME_CONFIG,
+                0, 0,
+                120, 120
+            );
+            
             card.innerHTML = `
-                <img src="${pokemon.image}" alt="${pokemon.name}">
+                ${canvas.outerHTML}
                 <h4>${pokemon.name}</h4>
                 <div class="pokemon-rarity ${pokemon.rarity.toLowerCase()}">
                     ${rarity.name}
@@ -109,7 +118,6 @@ class UIManager {
         });
     }
     
-    // Создает UI выбора команды
     createTeamSelectionUI() {
         const teamSelection = document.getElementById('team-selection');
         if (!teamSelection) return;
@@ -124,7 +132,7 @@ class UIManager {
             return;
         }
         
-        // Показываем текущую команду
+        // Текущая команда
         const teamSection = document.createElement('div');
         teamSection.className = 'current-team';
         teamSection.innerHTML = '<h3>Текущая команда</h3>';
@@ -137,7 +145,6 @@ class UIManager {
             teamSlots.appendChild(slot);
         });
         
-        // Добавляем пустые слоты
         for (let i = team.length; i < this.game.pokemonManager.maxTeamSize; i++) {
             const emptySlot = document.createElement('div');
             emptySlot.className = 'team-slot empty';
@@ -148,7 +155,7 @@ class UIManager {
         teamSection.appendChild(teamSlots);
         teamSelection.appendChild(teamSection);
         
-        // Показываем доступных покемонов
+        // Доступные покемоны
         const availableSection = document.createElement('div');
         availableSection.className = 'available-pokemon';
         availableSection.innerHTML = '<h3>Доступные покемоны</h3>';
@@ -170,25 +177,35 @@ class UIManager {
         availableSection.appendChild(availableGrid);
         teamSelection.appendChild(availableSection);
         
-        // Добавляем обработчики событий
         this.addTeamSelectionHandlers();
     }
     
-    // Создает слот команды
     createTeamSlot(pokemon, isSelected) {
         const slot = document.createElement('div');
         slot.className = `team-slot ${isSelected ? 'selected' : ''}`;
         slot.dataset.id = pokemon.id;
         
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        
+        GameUtils.drawPokemon(
+            canvas.getContext('2d'),
+            this.atlasManager,
+            pokemon.id,
+            GAME_CONFIG,
+            0, 0,
+            64, 64
+        );
+        
         slot.innerHTML = `
-            <img src="${pokemon.image}" alt="${pokemon.name}">
+            ${canvas.outerHTML}
             <div class="pokemon-info">
                 <span class="pokemon-name">${pokemon.name}</span>
                 <span class="pokemon-damage">Урон: ${pokemon.currentDamage}</span>
             </div>
         `;
         
-        // Добавляем кнопку удаления
         if (isSelected) {
             const removeBtn = document.createElement('button');
             removeBtn.className = 'remove-btn';
@@ -204,7 +221,6 @@ class UIManager {
         return slot;
     }
     
-    // Создает карточку покемона
     createPokemonCard(pokemon) {
         const card = document.createElement('div');
         card.className = 'pokemon-card selectable';
@@ -213,8 +229,21 @@ class UIManager {
         const rarity = GAME_CONFIG.RARITIES[pokemon.rarity];
         const energyPercent = (pokemon.energy / pokemon.maxEnergy) * 100;
         
+        const canvas = document.createElement('canvas');
+        canvas.width = 100;
+        canvas.height = 100;
+        
+        GameUtils.drawPokemon(
+            canvas.getContext('2d'),
+            this.atlasManager,
+            pokemon.id,
+            GAME_CONFIG,
+            0, 0,
+            100, 100
+        );
+        
         card.innerHTML = `
-            <img src="${pokemon.image}" alt="${pokemon.name}">
+            ${canvas.outerHTML}
             <h4>${pokemon.name}</h4>
             <div class="pokemon-rarity ${pokemon.rarity.toLowerCase()}">
                 ${rarity.name}
@@ -229,10 +258,8 @@ class UIManager {
         return card;
     }
     
-    // Добавляет обработчики для выбора команды
     addTeamSelectionHandlers() {
         const selectableCards = document.querySelectorAll('.pokemon-card.selectable');
-        const teamSlots = document.querySelectorAll('.team-slot.empty');
         
         selectableCards.forEach(card => {
             const addButton = card.querySelector('.add-to-team-btn');
@@ -246,7 +273,6 @@ class UIManager {
         });
     }
     
-    // Обновляет отображение команды на главном экране
     updateTeamDisplay() {
         const teamSlots = document.getElementById('team-slots');
         if (!teamSlots) return;
@@ -257,14 +283,27 @@ class UIManager {
         team.forEach(pokemon => {
             const slot = document.createElement('div');
             slot.className = 'team-slot';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            
+            GameUtils.drawPokemon(
+                canvas.getContext('2d'),
+                this.atlasManager,
+                pokemon.id,
+                GAME_CONFIG,
+                0, 0,
+                64, 64
+            );
+            
             slot.innerHTML = `
-                <img src="${pokemon.image}" alt="${pokemon.name}">
+                ${canvas.outerHTML}
                 <div class="energy-bar" style="width: ${(pokemon.energy / pokemon.maxEnergy) * 100}%"></div>
             `;
             teamSlots.appendChild(slot);
         });
         
-        // Добавляем пустые слоты
         for (let i = team.length; i < this.game.pokemonManager.maxTeamSize; i++) {
             const emptySlot = document.createElement('div');
             emptySlot.className = 'team-slot empty';
@@ -273,7 +312,6 @@ class UIManager {
         }
     }
     
-    // Обновляет весь UI
     updateUI() {
         this.updateTeamDisplay();
         this.game.battleSystem.updateUI();
@@ -281,9 +319,7 @@ class UIManager {
         this.game.shopSystem.updatePokeballsDisplay();
     }
     
-    // Инициализация обработчиков событий
     initEventListeners() {
-        // Кнопка атаки
         const attackButton = document.getElementById('attack-button');
         if (attackButton) {
             attackButton.addEventListener('click', () => {
@@ -291,7 +327,6 @@ class UIManager {
             });
         }
         
-        // Кнопки действий
         const actionButtons = {
             'pokeball-menu': 'pokeball',
             'collection-menu': 'collection',
@@ -308,7 +343,6 @@ class UIManager {
             }
         }
         
-        // Горячие клавиши
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -327,5 +361,4 @@ class UIManager {
     }
 }
 
-// Экспорт менеджера интерфейса
 window.UIManager = UIManager;
