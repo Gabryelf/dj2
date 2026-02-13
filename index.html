@@ -57,16 +57,16 @@
             </div>
 
             <div class="pokeballs-display">
-                <div class="pokeball-item" data-type="normal">
-                    <img src="./images/pokeball.png" alt="Покебол">
+                <div class="pokeball-item" data-type="NORMAL">
+                    <img src="" alt="Покебол" id="pokeball-normal-img">
                     <span id="normal-count">5</span>
                 </div>
-                <div class="pokeball-item" data-type="master">
-                    <img src="./images/masterball.png" alt="Мастербол">
+                <div class="pokeball-item" data-type="MASTER">
+                    <img src="" alt="Мастербол" id="pokeball-master-img">
                     <span id="master-count">0</span>
                 </div>
-                <div class="pokeball-item" data-type="mythic">
-                    <img src="./images/ultraball.png" alt="Мификбол">
+                <div class="pokeball-item" data-type="MYTHIC">
+                    <img src="" alt="Мификбол" id="pokeball-mythic-img">
                     <span id="mythic-count">0</span>
                 </div>
             </div>
@@ -90,7 +90,7 @@
                     
                     <div class="enemy-image-container">
                         <div class="rarity-badge" id="enemy-rarity">Обычный</div>
-                        <img id="enemy-image" src="./images/enemies/1.png" alt="Противник" class="enemy-img">
+                        <div id="enemy-image-container"></div>
                     </div>
                 </div>
 
@@ -159,9 +159,7 @@
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="pokeball-options" id="pokeball-options">
-                    <!-- Заполнится скриптом -->
-                </div>
+                <div class="pokeball-options" id="pokeball-options"></div>
             </div>
         </div>
     </div>
@@ -173,13 +171,7 @@
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="collection-grid" id="collection-grid">
-                    <div class="empty-collection">
-                        <i class="fas fa-box-open"></i>
-                        <p>Коллекция пуста!</p>
-                        <p>Открой покеболы, чтобы получить покемонов.</p>
-                    </div>
-                </div>
+                <div class="collection-grid" id="collection-grid"></div>
             </div>
         </div>
     </div>
@@ -191,9 +183,7 @@
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="shop-items" id="shop-items">
-                    <!-- Заполнится скриптом -->
-                </div>
+                <div class="shop-items" id="shop-items"></div>
             </div>
         </div>
     </div>
@@ -205,9 +195,7 @@
                 <span class="close">&times;</span>
             </div>
             <div class="modal-body">
-                <div class="team-selection" id="team-selection">
-                    <!-- Заполнится скриптом -->
-                </div>
+                <div class="team-selection" id="team-selection"></div>
             </div>
         </div>
     </div>
@@ -216,14 +204,14 @@
     <div id="notification-container"></div>
 
     <!-- Загрузка скриптов -->
-    <!-- В конце body, ПЕРЕД game.js -->
     <script src="config.js"></script>
+    <script src="utils.js"></script>
     <script src="save-manager.js"></script>
     <script src="pokemon-manager.js"></script>
-    <script src="battle-system.js"></script>
-    <script src="shop-system.js"></script>
     <script src="animations.js"></script>
     <script src="sound-generator.js"></script>
+    <script src="battle-system.js"></script>
+    <script src="shop-system.js"></script>
     <script src="ui-manager.js"></script>
     <script src="tutorial.js"></script>
     <script src="game.js"></script>

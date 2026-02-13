@@ -881,6 +881,48 @@
     animation: none;
 }
 
+/* Стили для canvas элементов */
+.pokemon-canvas, .enemy-img, .pokeball-canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.team-slot canvas {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid var(--secondary-color);
+}
+
+.pokemon-card canvas {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 15px;
+    transition: transform 0.3s ease;
+}
+
+.pokemon-card:hover canvas {
+    transform: scale(1.1);
+}
+
+/* Стили для выбора покемона при восстановлении энергии */
+.restore-btn {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.restore-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 5px 15px rgba(105, 240, 174, 0.3);
+}
+
 /* Анимация для привлечения внимания к кнопке */
 @keyframes attention {
     0%, 100% { transform: scale(1); }
@@ -973,3 +1015,4 @@
         grid-template-columns: 1fr;
     }
 }
+
