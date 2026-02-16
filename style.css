@@ -1,339 +1,1219 @@
-/* Сбрасываем отступы и настраиваем базовые стили */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+/* ==============================
+   СОВРЕМЕННЫЙ ПРЕМИАЛЬНЫЙ ТЕМНЫЙ СТИЛЬ
+   ============================== */
 
-:root {
-    --primary-color: #ff5252;
-    --secondary-color: #4fc3f7;
-    --accent-color: #ffeb3b;
-    --success-color: #69f0ae;
-    --warning-color: #ffd740;
-    --danger-color: #ff5252;
-    --dark-color: #1a237e;
-    --light-color: #f5f5f5;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    --radius: 16px;
-}
+   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-body {
-    background: linear-gradient(135deg, #0d47a1 0%, #1a237e 100%);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-    color: #333;
-    overflow-x: hidden;
-}
-
-/* Туториал */
-.tutorial-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 9999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    backdrop-filter: blur(5px);
-}
-
-.tutorial-content {
-    background: linear-gradient(145deg, #ffffff, #f5f5f5);
-    border-radius: var(--radius);
-    padding: 40px;
-    max-width: 600px;
-    width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    border: 4px solid var(--accent-color);
-    text-align: center;
-    position: relative;
-}
-
-.tutorial-content h2 {
-    color: var(--dark-color);
-    margin-bottom: 30px;
-    font-size: 1.8rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
-}
-
-.tutorial-step {
-    display: none;
-    animation: fadeIn 0.5s ease;
-}
-
-.tutorial-step.active {
-    display: block;
-}
-
-.tutorial-step p {
-    margin: 15px 0;
-    font-size: 1.2rem;
-    line-height: 1.6;
-    color: #444;
-}
-
-.tutorial-btn {
-    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-    color: white;
-    border: none;
-    padding: 15px 40px;
-    font-size: 1.2rem;
-    border-radius: 50px;
-    cursor: pointer;
-    margin-top: 20px;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    box-shadow: var(--shadow);
-}
-
-.tutorial-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(255, 82, 82, 0.3);
-}
-
-/* Контейнер игры */
-.container {
-    background: linear-gradient(145deg, #ffffff, #f8f9fa);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 25px;
-    max-width: 1000px;
-    width: 100%;
-    border: 3px solid var(--accent-color);
-    max-height: 95vh;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* Добавьте в style.css */
-
-.pokeball-item canvas {
-    width: 32px;
-    height: 32px;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-}
-
-.team-slot canvas {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    border: 3px solid var(--secondary-color);
-    object-fit: cover;
-}
-
-.pokemon-card canvas {
-    width: 120px;
-    height: 120px;
-    margin-bottom: 15px;
-    transition: transform 0.3s ease;
-    image-rendering: pixelated;
-}
-
-.enemy-img canvas {
-    width: 250px;
-    height: 250px;
-    animation: float 3s ease-in-out infinite;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
-}
-
-.pokeball-canvas {
-    image-rendering: pixelated;
-}
-
-/* Шапка */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-}
-
-.stats-bar {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-}
-
-.money-display, .level-display {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
-    background: white;
-    border-radius: 50px;
-    box-shadow: var(--shadow);
-    font-weight: bold;
-}
-
-.money-display {
-    background: linear-gradient(45deg, #ffeb3b, #ffc107);
-}
-
-.level-display {
-    background: linear-gradient(45deg, #e3f2fd, #bbdefb);
-}
-
-.money-display i {
-    color: #ff9800;
-    font-size: 1.5rem;
-}
-
-.level-display i {
-    color: #2196f3;
-    font-size: 1.5rem;
-}
-
-#money {
-    font-size: 1.4rem;
-    color: #e65100;
-}
-
-/* Покеболы */
-.pokeballs-display {
-    display: flex;
-    gap: 15px;
-}
-
-.pokeball-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 20px;
-    background: white;
-    border-radius: 50px;
-    box-shadow: var(--shadow);
-    transition: transform 0.3s ease;
-    cursor: pointer;
-}
-
-.pokeball-item:hover {
-    transform: translateY(-3px);
-}
-
-.pokeball-item img {
-    width: 32px;
-    height: 32px;
-    transition: transform 0.3s ease;
-}
-
-.pokeball-item:hover img {
-    transform: rotate(15deg);
-}
-
-.pokeball-item span {
-    font-weight: bold;
-    font-size: 1.2rem;
-    color: var(--dark-color);
-}
-
-/* Редкости */
-.common { color: #78909c; }
-.uncommon { color: #43a047; }
-.rare { color: #1e88e5; }
-.epic { color: #8e24aa; }
-.special { color: #f4511e; }
-.legendary { color: #ffd600; text-shadow: 0 0 10px rgba(255, 214, 0, 0.3); }
-
-/* Адаптивность */
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-        max-height: 90vh;
-    }
-    
-    header {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .stats-bar {
-        justify-content: space-between;
-    }
-    
-    .pokeballs-display {
-        justify-content: center;
-    }
-    
-    .tutorial-content {
-        padding: 20px;
-    }
-    
-    .tutorial-content h2 {
-        font-size: 1.5rem;
-    }
-    
-    .tutorial-step p {
-        font-size: 1rem;
-    }
-}
-
-@media (max-width: 480px) {
-    body {
-        padding: 10px;
-    }
-    
-    .money-display, .level-display {
-        padding: 10px 15px;
-        font-size: 0.9rem;
-    }
-    
-    .pokeball-item {
-        padding: 8px 15px;
-    }
-    
-    .pokeball-item img {
-        width: 24px;
-        height: 24px;
-    }
-}
-
-/* Анимации */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-.pulse {
-    animation: pulse 1.5s ease-in-out infinite;
-}
-
-/* Полоса прокрутки */
-::-webkit-scrollbar {
-    width: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--primary-color);
-    border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #ff1e1e;
-}
+   * {
+       margin: 0;
+       padding: 0;
+       box-sizing: border-box;
+   }
+   
+   :root {
+       /* Основная цветовая схема - темная и элегантная */
+       --bg-primary: #0B0E14;
+       --bg-secondary: #121620;
+       --bg-tertiary: #1A1F2C;
+       --bg-card: rgba(26, 31, 44, 0.7);
+       --bg-card-hover: rgba(36, 42, 58, 0.8);
+       
+       /* Акценты - приглушенные, но с эффектом свечения */
+       --accent-primary: #6C5CE7;
+       --accent-secondary: #A463F5;
+       --accent-tertiary: #FF6B6B;
+       --accent-success: #00B894;
+       --accent-warning: #FDCB6E;
+       
+       /* Цвета текста */
+       --text-primary: #FFFFFF;
+       --text-secondary: #A0A8C0;
+       --text-muted: #6A7187;
+       --text-dark: #1E1E2E;
+       
+       /* Эффекты */
+       --glow-primary: 0 0 20px rgba(108, 92, 231, 0.3);
+       --glow-secondary: 0 0 20px rgba(164, 99, 245, 0.3);
+       --glow-success: 0 0 20px rgba(0, 184, 148, 0.3);
+       --glow-warning: 0 0 20px rgba(253, 203, 110, 0.3);
+       
+       /* Размеры */
+       --border-radius-lg: 32px;
+       --border-radius-md: 24px;
+       --border-radius-sm: 16px;
+       --border-radius-xs: 12px;
+       
+       /* Тени */
+       --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
+       --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.15);
+       --shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.2);
+       --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.25);
+   }
+   
+   body {
+       font-family: 'Inter', sans-serif;
+       background: var(--bg-primary);
+       min-height: 100vh;
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       padding: 16px;
+       color: var(--text-primary);
+       position: relative;
+       overflow: hidden;
+   }
+   
+   /* Элегантный градиентный фон */
+   body::before {
+       content: '';
+       position: fixed;
+       top: -50%;
+       left: -50%;
+       width: 200%;
+       height: 200%;
+       background: 
+           radial-gradient(circle at 30% 40%, rgba(108, 92, 231, 0.15) 0%, transparent 40%),
+           radial-gradient(circle at 70% 60%, rgba(164, 99, 245, 0.15) 0%, transparent 40%),
+           radial-gradient(circle at 50% 50%, rgba(0, 184, 148, 0.1) 0%, transparent 50%);
+       animation: rotate 30s linear infinite;
+       z-index: 0;
+   }
+   
+   @keyframes rotate {
+       from { transform: rotate(0deg); }
+       to { transform: rotate(360deg); }
+   }
+   
+   /* Основной контейнер с эффектом стекла */
+   .container {
+       position: relative;
+       z-index: 1;
+       width: 100%;
+       max-width: 1400px;
+       height: 95vh;
+       background: rgba(18, 22, 32, 0.6);
+       backdrop-filter: blur(20px) saturate(180%);
+       -webkit-backdrop-filter: blur(20px) saturate(180%);
+       border-radius: var(--border-radius-lg);
+       border: 1px solid rgba(255, 255, 255, 0.05);
+       box-shadow: var(--shadow-xl);
+       display: flex;
+       flex-direction: column;
+       overflow: hidden;
+   }
+   
+   /* ==============================
+      HEADER (20% высоты) - Минималистичный
+      ============================== */
+   
+   header {
+       height: 8vh;
+       min-height: 60px;
+       max-height: 100px;
+       padding: 20px 32px;
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+       background: rgba(0, 0, 0, 0.1);
+   }
+   
+   .stats-bar {
+       display: flex;
+       gap: 16px;
+   }
+   
+   .money-display, .level-display {
+       display: flex;
+       align-items: center;
+       gap: 12px;
+       padding: 10px 20px;
+       background: rgba(255, 255, 255, 0.02);
+       border-radius: 100px;
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       font-weight: 500;
+       font-size: 1rem;
+       color: var(--text-secondary);
+       transition: all 0.2s ease;
+   }
+   
+   .money-display:hover, .level-display:hover {
+       background: rgba(255, 255, 255, 0.03);
+       border-color: rgba(108, 92, 231, 0.3);
+   }
+   
+   .money-display i {
+       color: var(--accent-warning);
+       font-size: 1.2rem;
+   }
+   
+   .level-display i {
+       color: var(--accent-primary);
+       font-size: 1.2rem;
+   }
+   
+   #money, #player-level {
+       font-weight: 700;
+       font-size: 1.3rem;
+       color: var(--text-primary);
+   }
+   
+   #money {
+       color: var(--accent-warning);
+   }
+   
+   #player-level {
+       color: var(--accent-primary);
+   }
+   
+   .pokeballs-display {
+       display: flex;
+       gap: 12px;
+   }
+   
+   .pokeball-item {
+       display: flex;
+       align-items: center;
+       gap: 8px;
+       padding: 8px 16px;
+       background: rgba(255, 255, 255, 0.02);
+       border-radius: 100px;
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       cursor: pointer;
+       transition: all 0.2s ease;
+   }
+   
+   .pokeball-item:hover {
+       background: rgba(255, 255, 255, 0.03);
+       border-color: var(--accent-primary);
+       transform: translateY(-1px);
+   }
+   
+   .pokeball-item img {
+       width: 24px;
+       height: 24px;
+       opacity: 0.9;
+       filter: brightness(0.9);
+   }
+   
+   .pokeball-item span {
+       font-weight: 600;
+       font-size: 1rem;
+       color: var(--text-secondary);
+   }
+   
+   /* ==============================
+      MAIN (60% высоты) - Фокус на враге
+      ============================== */
+   
+   main {
+       flex: 1;
+       display: flex;
+       flex-direction: column;
+       padding: 24px 32px;
+       overflow: hidden;
+   }
+   
+   .battle-area {
+       flex: 1;
+       display: flex;
+       flex-direction: column;
+       gap: 20px;
+       overflow: hidden;
+   }
+   
+   /* КАРТОЧКА ВРАГА (40% от main) - Главный акцент */
+   .enemy-card {
+       flex: 2;
+       background: linear-gradient(135deg, rgba(26, 31, 44, 0.8), rgba(18, 22, 32, 0.9));
+       border-radius: var(--border-radius-md);
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       padding: 24px;
+       display: flex;
+       flex-direction: column;
+       position: relative;
+       overflow: hidden;
+       box-shadow: var(--shadow-lg);
+       transition: all 0.3s ease;
+   }
+   
+   /* Элегантная подсветка по краям */
+   .enemy-card::before {
+       content: '';
+       position: absolute;
+       top: 0;
+       left: 0;
+       right: 0;
+       bottom: 0;
+       border-radius: var(--border-radius-md);
+       padding: 2px;
+       background: linear-gradient(135deg, var(--accent-tertiary), var(--accent-secondary));
+       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+       -webkit-mask-composite: xor;
+       mask-composite: exclude;
+       pointer-events: none;
+       opacity: 0.3;
+       transition: opacity 0.3s ease;
+   }
+   
+   .enemy-card:hover::before {
+       opacity: 0.6;
+   }
+   
+   .enemy-header {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       margin-bottom: 16px;
+       position: relative;
+       z-index: 2;
+   }
+   
+   .enemy-name {
+       font-size: 2.2rem;
+       font-weight: 700;
+       letter-spacing: -0.5px;
+       background: linear-gradient(135deg, #fff, var(--text-secondary));
+       -webkit-background-clip: text;
+       -webkit-text-fill-color: transparent;
+       text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+   }
+   
+   .enemy-level {
+       padding: 6px 16px;
+       background: rgba(255, 107, 107, 0.1);
+       border: 1px solid rgba(255, 107, 107, 0.3);
+       border-radius: 100px;
+       font-weight: 600;
+       font-size: 1rem;
+       color: var(--accent-tertiary);
+   }
+   
+   /* HP Bar - Минималистичный */
+   .enemy-hp {
+       margin-bottom: 90px;
+       position: relative;
+       z-index: 2;
+   }
+   
+   .hp-bar {
+       height: 8px;
+       background: rgba(255, 255, 255, 0.05);
+       border-radius: 100px;
+       overflow: hidden;
+       margin-bottom: 8px;
+   }
+   
+   .hp-fill {
+       height: 100%;
+       background: linear-gradient(90deg, var(--accent-success), #00D9B0);
+       width: 100%;
+       transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+       border-radius: 100px;
+       position: relative;
+   }
+   
+   .hp-text {
+       text-align: right;
+       font-weight: 500;
+       font-size: 0.9rem;
+       color: var(--text-muted);
+   }
+   
+   /* Изображение врага - Центральный элемент */
+   .enemy-image-container {
+       flex: 1;
+       display: flex;
+       justify-content: center;
+       align-items: center;
+       position: relative;
+       min-height: 0;
+       margin: 10px 0;
+   }
+   
+   .rarity-badge {
+       position: absolute;
+       top: 0;
+       left: 20px;
+       padding: 6px 16px;
+       background: rgba(0, 0, 0, 0.5);
+       border-radius: 100px;
+       font-weight: 600;
+       font-size: 0.9rem;
+       letter-spacing: 0.5px;
+       border: 1px solid rgba(255, 255, 255, 0.1);
+       backdrop-filter: blur(10px);
+       z-index: 3;
+       color: var(--text-secondary);
+   }
+   
+   .enemy-image {
+       max-width: 100%;
+       max-height: 100%;
+       width: auto;
+       height: auto;
+       object-fit: contain;
+       filter: drop-shadow(0 0 30px rgba(255, 107, 107, 0.3));
+       animation: enemyFloat 4s ease-in-out infinite;
+       transition: all 0.3s ease;
+   }
+   
+   @keyframes enemyFloat {
+       0%, 100% { transform: translateY(0) scale(1); }
+       50% { transform: translateY(-8px) scale(1.02); }
+   }
+   
+   /* КОМАНДА ИГРОКА (20% от main) - Компактная */
+   .player-team {
+       flex: 1;
+       background: rgba(26, 31, 44, 0.5);
+       border-radius: var(--border-radius-sm);
+       border: 1px solid rgba(255, 255, 255, 0.02);
+       padding: 16px 20px;
+       display: flex;
+       flex-direction: column;
+       backdrop-filter: blur(10px);
+   }
+   
+   .player-team h3 {
+       display: flex;
+       align-items: center;
+       gap: 8px;
+       font-size: 1rem;
+       font-weight: 500;
+       color: var(--text-muted);
+       margin-bottom: 12px;
+       letter-spacing: 0.5px;
+   }
+   
+   .player-team h3 i {
+       color: var(--accent-secondary);
+       font-size: 1rem;
+   }
+   
+   .team-slots {
+       display: grid;
+       grid-template-columns: repeat(3, 1fr);
+       gap: 12px;
+       flex: 1;
+       min-height: 0;
+   }
+   
+   .team-slot {
+       background: rgba(0, 0, 0, 0.2);
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       border-radius: var(--border-radius-xs);
+       display: flex;
+       flex-direction: column;
+       align-items: center;
+       justify-content: center;
+       padding: 8px;
+       position: relative;
+       transition: all 0.2s ease;
+   }
+   
+   .team-slot:not(.empty):hover {
+       background: rgba(108, 92, 231, 0.1);
+       border-color: var(--accent-primary);
+   }
+   
+   .team-slot.empty {
+       background: rgba(255, 255, 255, 0.01);
+       border: 1px dashed rgba(255, 255, 255, 0.05);
+   }
+   
+   .team-slot.empty i {
+       font-size: 1.5rem;
+       color: var(--text-muted);
+       margin-bottom: 2px;
+       opacity: 0.3;
+   }
+   
+   .team-slot.empty span {
+       font-size: 0.7rem;
+       color: var(--text-muted);
+       opacity: 0.3;
+   }
+   
+   .team-pokemon-image {
+       width: 40px;
+       height: 40px;
+       object-fit: contain;
+       filter: drop-shadow(0 0 10px rgba(164, 99, 245, 0.3));
+       animation: teamIdle 4s ease-in-out infinite;
+       animation-delay: calc(var(--i, 0) * 0.3s);
+   }
+   
+   @keyframes teamIdle {
+       0%, 100% { transform: translateY(0) scale(1); }
+       50% { transform: translateY(-2px) scale(1.02); }
+   }
+   
+   .energy-bar {
+       width: 80%;
+       height: 2px;
+       background: rgba(255, 255, 255, 0.05);
+       border-radius: 2px;
+       margin-top: 6px;
+       position: relative;
+       overflow: hidden;
+   }
+   
+   .energy-bar::before {
+       content: '';
+       position: absolute;
+       left: 0;
+       top: 0;
+       height: 100%;
+       width: var(--energy-width, 100%);
+       background: var(--accent-success);
+       border-radius: 2px;
+   }
+   
+   .team-stats {
+       margin-top: 8px;
+       text-align: right;
+   }
+   
+   .total-damage {
+       display: inline-flex;
+       align-items:center;
+       gap: 16px;
+       font-size: 0.9rem;
+       color: var(--text-muted);
+   }
+   
+   .total-damage i {
+       color: var(--accent-warning);
+       font-size: 0.9rem;
+   }
+   
+   #total-damage {
+       font-weight: 400;
+       color: var(--accent-warning);
+   }
+   
+   /* ==============================
+      ПАНЕЛЬ УПРАВЛЕНИЯ (20% высоты)
+      ============================== */
+   
+   .control-panel {
+       height: 20vh;
+       min-height: 100px;
+       max-height: 140px;
+       display: flex;
+       flex-direction: column;
+       justify-content: flex-end;
+       gap: 16px;
+       padding: 20px 0 16px;
+       border-top: 1px solid rgba(255, 255, 255, 0.03);
+   }
+   
+   /* Кнопка атаки - Элегантная и полупрозрачная */
+   .attack-btn {
+       position: relative;
+       width: 100%;
+       height: 64px;
+       background: rgba(108, 92, 231, 0.1);
+       border: 1px solid rgba(108, 92, 231, 0.3);
+       border-radius: 100px;
+       backdrop-filter: blur(10px);
+       color: white;
+       font-size: 1.4rem;
+       font-weight: 600;
+       letter-spacing: 1px;
+       cursor: pointer;
+       transition: all 0.3s ease;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       gap: 12px;
+       box-shadow: 0 0 30px rgba(108, 92, 231, 0.1);
+   }
+   
+   .attack-btn i {
+       font-size: 1.6rem;
+       color: var(--accent-primary);
+   }
+   
+   .attack-btn small {
+       font-size: 0.8rem;
+       opacity: 0.5;
+       font-weight: 400;
+       margin-left: 8px;
+   }
+   
+   .attack-btn:hover {
+       background: rgba(108, 92, 231, 0.15);
+       border-color: var(--accent-primary);
+       box-shadow: 0 0 40px rgba(108, 92, 231, 0.2);
+       transform: translateY(-1px);
+   }
+   
+   .attack-btn:active {
+       transform: translateY(1px);
+   }
+   
+   .attack-btn:disabled {
+       opacity: 0.2;
+       cursor: not-allowed;
+   }
+   
+   /* Кнопки-вкладки - Минималистичные, только иконки */
+   .action-buttons {
+       display: grid;
+       grid-template-columns: repeat(4, 1fr);
+       gap: 8px;
+   }
+   
+   .action-btn {
+       background: transparent;
+       border: none;
+       padding: 8px;
+       color: var(--text-muted);
+       font-size: 1.3rem;
+       cursor: pointer;
+       transition: all 0.2s ease;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       border-radius: var(--border-radius-xs);
+       position: relative;
+   }
+   
+   .action-btn span {
+       display: none; /* Прячем текст, оставляем только иконки */
+   }
+   
+   .action-btn i {
+       font-size: 1.3rem;
+       transition: all 0.2s ease;
+   }
+   
+   /* Элегантная подсветка активной вкладки */
+   .action-btn.active {
+       color: var(--accent-primary);
+   }
+   
+   .action-btn.active::after {
+       content: '';
+       position: absolute;
+       bottom: -4px;
+       left: 50%;
+       transform: translateX(-50%);
+       width: 20px;
+       height: 2px;
+       background: var(--accent-primary);
+       border-radius: 2px;
+       box-shadow: var(--glow-primary);
+   }
+   
+   .action-btn:hover {
+       color: var(--text-secondary);
+   }
+   
+   /* ==============================
+      МОДАЛЬНЫЕ ОКНА - Премиальный стиль
+      ============================== */
+   
+   .modal {
+       display: none;
+       position: fixed;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       background: rgba(0, 0, 0, 0.8);
+       backdrop-filter: blur(20px);
+       z-index: 2000;
+       align-items: center;
+       justify-content: center;
+   }
+   
+   .modal-content {
+       background: rgba(26, 31, 44, 0.9);
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       border-radius: var(--border-radius-md);
+       width: 90%;
+       max-width: 900px;
+       max-height: 80vh;
+       box-shadow: var(--shadow-xl);
+       animation: modalFadeIn 0.3s ease;
+       overflow: hidden;
+       display: flex;
+       flex-direction: column;
+       backdrop-filter: blur(20px);
+   }
+   
+   @keyframes modalFadeIn {
+       from {
+           opacity: 0;
+           transform: translateY(20px);
+       }
+       to {
+           opacity: 1;
+           transform: translateY(0);
+       }
+   }
+   
+   .modal-header {
+       padding: 20px 24px;
+       background: rgba(0, 0, 0, 0.2);
+       border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+   }
+   
+   .modal-header h2 {
+       font-size: 1.3rem;
+       font-weight: 600;
+       display: flex;
+       align-items: center;
+       gap: 12px;
+       color: var(--text-primary);
+   }
+   
+   .modal-header h2 i {
+       color: var(--accent-primary);
+       font-size: 1.2rem;
+   }
+   
+   .close {
+       font-size: 1.5rem;
+       color: var(--text-muted);
+       cursor: pointer;
+       transition: all 0.2s ease;
+       width: 32px;
+       height: 32px;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       border-radius: 50%;
+   }
+   
+   .close:hover {
+       color: var(--text-primary);
+       background: rgba(255, 255, 255, 0.05);
+   }
+   
+   .modal-body {
+       padding: 24px;
+       overflow-y: auto;
+   }
+   
+   /* Стилизация скроллбара */
+   .modal-body::-webkit-scrollbar {
+       width: 4px;
+   }
+   
+   .modal-body::-webkit-scrollbar-track {
+       background: rgba(255, 255, 255, 0.02);
+   }
+   
+   .modal-body::-webkit-scrollbar-thumb {
+       background: rgba(255, 255, 255, 0.1);
+       border-radius: 4px;
+   }
+   
+   .modal-body::-webkit-scrollbar-thumb:hover {
+       background: rgba(255, 255, 255, 0.2);
+   }
+   
+   /* Покеболы в модальном окне */
+   .pokeball-options {
+       display: flex;
+       flex-direction: column;
+       gap: 12px;
+   }
+   
+   .pokeball-option {
+       display: flex;
+       align-items: center;
+       gap: 20px;
+       padding: 16px 20px;
+       background: rgba(255, 255, 255, 0.02);
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       border-radius: var(--border-radius-sm);
+       transition: all 0.2s ease;
+   }
+   
+   .pokeball-option:hover {
+       background: rgba(255, 255, 255, 0.03);
+       border-color: var(--accent-primary);
+       transform: translateX(4px);
+   }
+   
+   .pokeball-option-image {
+       width: 48px;
+       height: 48px;
+       object-fit: contain;
+       opacity: 0.9;
+   }
+   
+   .pokeball-option-info {
+       flex: 1;
+   }
+   
+   .pokeball-option-info h3 {
+       font-size: 1.1rem;
+       font-weight: 600;
+       margin-bottom: 4px;
+       color: var(--text-primary);
+   }
+   
+   .pokeball-option-info p {
+       color: var(--text-muted);
+       font-size: 0.85rem;
+       margin-bottom: 8px;
+   }
+   
+   .pokeball-stats {
+       display: flex;
+       gap: 16px;
+       color: var(--text-secondary);
+       font-size: 0.85rem;
+   }
+   
+   .pokeball-stats i {
+       margin-right: 4px;
+       color: var(--accent-warning);
+   }
+   
+   .open-pokeball-btn {
+       padding: 10px 24px;
+       background: transparent;
+       border: 1px solid var(--accent-primary);
+       border-radius: 100px;
+       color: var(--accent-primary);
+       font-weight: 500;
+       font-size: 0.9rem;
+       cursor: pointer;
+       transition: all 0.2s ease;
+   }
+   
+   .open-pokeball-btn:hover {
+       background: var(--accent-primary);
+       color: white;
+   }
+   
+   .open-pokeball-btn:disabled {
+       opacity: 0.3;
+       cursor: not-allowed;
+       border-color: var(--text-muted);
+       color: var(--text-muted);
+   }
+   
+   /* Коллекция */
+   .collection-grid {
+       display: grid;
+       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+       gap: 12px;
+   }
+   
+   .pokemon-card {
+       background: rgba(255, 255, 255, 0.02);
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       border-radius: var(--border-radius-sm);
+       padding: 16px 12px;
+       text-align: center;
+       transition: all 0.2s ease;
+       position: relative;
+   }
+   
+   .pokemon-card:hover {
+       background: rgba(255, 255, 255, 0.03);
+       border-color: var(--accent-secondary);
+       transform: translateY(-2px);
+   }
+   
+   .pokemon-card img {
+       width: 80px;
+       height: 80px;
+       object-fit: contain;
+       margin-bottom: 8px;
+       filter: drop-shadow(0 0 15px rgba(164, 99, 245, 0.2));
+   }
+   
+   .pokemon-card h4 {
+       font-size: 1rem;
+       font-weight: 600;
+       margin-bottom: 4px;
+       color: var(--text-primary);
+   }
+   
+   .pokemon-rarity {
+       font-size: 0.7rem;
+       padding: 2px 8px;
+       border-radius: 100px;
+       display: inline-block;
+       margin-bottom: 8px;
+       background: rgba(255, 255, 255, 0.05);
+       color: var(--text-secondary);
+   }
+   
+   .pokemon-stats {
+       font-size: 0.75rem;
+       color: var(--text-muted);
+       line-height: 1.4;
+   }
+   
+   .in-team {
+       position: absolute;
+       top: 8px;
+       right: 8px;
+       width: 20px;
+       height: 20px;
+       background: var(--accent-success);
+       border-radius: 50%;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       font-size: 0.7rem;
+       color: white;
+   }
+   
+   .in-team::before {
+       content: '✓';
+   }
+   
+   /* Уведомления */
+   #notification-container {
+       position: fixed;
+       top: 20px;
+       right: 20px;
+       z-index: 3000;
+       display: flex;
+       flex-direction: column;
+       gap: 8px;
+       max-width: 320px;
+   }
+   
+   .notification {
+       background: rgba(26, 31, 44, 0.95);
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       border-radius: var(--border-radius-sm);
+       padding: 16px 20px;
+       display: flex;
+       align-items: center;
+       gap: 12px;
+       backdrop-filter: blur(20px);
+       animation: notificationSlide 0.3s ease;
+       box-shadow: var(--shadow-lg);
+   }
+   
+   @keyframes notificationSlide {
+       from {
+           opacity: 0;
+           transform: translateX(100%);
+       }
+       to {
+           opacity: 1;
+           transform: translateX(0);
+       }
+   }
+   
+   .notification.success {
+       border-left: 3px solid var(--accent-success);
+   }
+   
+   .notification.error {
+       border-left: 3px solid var(--accent-tertiary);
+   }
+   
+   .notification.warning {
+       border-left: 3px solid var(--accent-warning);
+   }
+   
+   .notification i {
+       font-size: 1.2rem;
+   }
+   
+   .notification.success i {
+       color: var(--accent-success);
+   }
+   
+   .notification.error i {
+       color: var(--accent-tertiary);
+   }
+   
+   .notification.warning i {
+       color: var(--accent-warning);
+   }
+   
+   .notification-content p {
+       color: var(--text-secondary);
+       font-size: 0.9rem;
+   }
+   
+   /* Анимации для урона */
+   .damage-number {
+       position: fixed;
+       font-size: 1.8rem;
+       font-weight: 700;
+       color: var(--accent-tertiary);
+       text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+       pointer-events: none;
+       z-index: 4000;
+       animation: damageFloat 1s ease-out forwards;
+   }
+   
+   @keyframes damageFloat {
+       0% {
+           opacity: 1;
+           transform: translateY(0) scale(1);
+       }
+       100% {
+           opacity: 0;
+           transform: translateY(-60px) scale(1.3);
+       }
+   }
+   
+   .damage-number.critical {
+       font-size: 2.4rem;
+       color: var(--accent-warning);
+       text-shadow: 0 0 30px rgba(253, 203, 110, 0.5);
+   }
+   
+   /* Туториал */
+   .tutorial-overlay {
+       position: fixed;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       background: rgba(0, 0, 0, 0.9);
+       backdrop-filter: blur(20px);
+       z-index: 10000;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+   }
+   
+   .tutorial-content {
+       background: rgba(26, 31, 44, 0.95);
+       border: 1px solid rgba(255, 255, 255, 0.03);
+       border-radius: var(--border-radius-md);
+       padding: 40px;
+       max-width: 480px;
+       width: 90%;
+       text-align: center;
+       box-shadow: var(--shadow-xl);
+   }
+   
+   .tutorial-content h2 {
+       margin-bottom: 24px;
+       font-size: 1.5rem;
+       font-weight: 600;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       gap: 12px;
+       color: var(--text-primary);
+   }
+   
+   .tutorial-step {
+       display: none;
+   }
+   
+   .tutorial-step.active {
+       display: block;
+   }
+   
+   .tutorial-step p {
+       margin: 16px 0;
+       color: var(--text-secondary);
+       line-height: 1.6;
+       font-size: 1rem;
+   }
+   
+   .tutorial-btn {
+       padding: 14px 32px;
+       background: transparent;
+       border: 1px solid var(--accent-primary);
+       border-radius: 100px;
+       color: var(--accent-primary);
+       font-weight: 600;
+       font-size: 1rem;
+       cursor: pointer;
+       transition: all 0.2s ease;
+       margin-top: 24px;
+   }
+   
+   .tutorial-btn:hover {
+       background: var(--accent-primary);
+       color: white;
+   }
+   
+   /* ==============================
+      АДАПТИВНОСТЬ
+      ============================== */
+   
+   /* Планшеты */
+   @media (max-width: 1024px) {
+       header {
+           padding: 16px 20px;
+       }
+       
+       .money-display, .level-display {
+           padding: 8px 16px;
+           font-size: 0.9rem;
+       }
+       
+       #money, #player-level {
+           font-size: 1.1rem;
+       }
+       
+       .enemy-name {
+           font-size: 1.8rem;
+       }
+       
+       main {
+           padding: 20px;
+       }
+   }
+   
+   /* Мобильные (портрет) */
+   @media (max-width: 768px) and (orientation: portrait) {
+       body {
+           padding: 8px;
+       }
+       
+       header {
+           padding: 12px 16px;
+       }
+       
+       .stats-bar {
+           gap: 8px;
+       }
+       
+       .money-display, .level-display {
+           padding: 6px 12px;
+           font-size: 0.8rem;
+           gap: 6px;
+       }
+       
+       #money, #player-level {
+           font-size: 1rem;
+       }
+       
+       .pokeballs-display {
+           gap: 4px;
+       }
+       
+       .pokeball-item {
+           padding: 4px 8px;
+       }
+       
+       .pokeball-item img {
+           width: 18px;
+           height: 18px;
+       }
+       
+       .pokeball-item span {
+           font-size: 0.8rem;
+       }
+       
+       main {
+           padding: 16px;
+       }
+       
+       .enemy-card {
+           padding: 16px;
+       }
+       
+       .enemy-name {
+           font-size: 1.4rem;
+       }
+       
+       .enemy-level {
+           padding: 4px 12px;
+           font-size: 0.8rem;
+       }
+       
+       .hp-bar {
+           height: 6px;
+       }
+       
+       .hp-text {
+           font-size: 0.8rem;
+       }
+       
+       .rarity-badge {
+           padding: 4px 12px;
+           font-size: 0.7rem;
+       }
+       
+       .player-team {
+           padding: 12px;
+       }
+       
+       .player-team h3 {
+           font-size: 0.8rem;
+           margin-bottom: 8px;
+       }
+       
+       .team-slots {
+           gap: 6px;
+       }
+       
+       .team-pokemon-image {
+           width: 30px;
+           height: 30px;
+       }
+       
+       .total-damage {
+           font-size: 0.8rem;
+       }
+       
+       .control-panel {
+           padding: 12px 0 8px;
+       }
+       
+       .attack-btn {
+           height: 48px;
+           font-size: 1.1rem;
+       }
+       
+       .attack-btn i {
+           font-size: 1.2rem;
+       }
+       
+       .attack-btn small {
+           font-size: 0.7rem;
+       }
+       
+       .action-btn i {
+           font-size: 1.1rem;
+       }
+   }
+   
+   /* Мобильные (ландшафт) */
+   @media (max-width: 900px) and (orientation: landscape) {
+       .container {
+           height: 98vh;
+       }
+       
+       header {
+           height: 15vh;
+           min-height: 60px;
+       }
+       
+       .enemy-name {
+           font-size: 1.6rem;
+       }
+       
+       .team-pokemon-image {
+           width: 35px;
+           height: 35px;
+       }
+       
+       .control-panel {
+           height: 20vh;
+           min-height: 80px;
+       }
+       
+       .attack-btn {
+           height: 50px;
+       }
+   }

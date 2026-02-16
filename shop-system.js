@@ -1,5 +1,5 @@
 // ==============================
-// СИСТЕМА МАГАЗИНА (ОБНОВЛЕННАЯ)
+// СИСТЕМА МАГАЗИНА С ЦЕЛЫМИ ЧИСЛАМИ
 // ==============================
 
 class ShopSystem {
@@ -33,7 +33,7 @@ class ShopSystem {
     updateMoneyDisplay() {
         const moneyElement = document.getElementById('money');
         if (moneyElement) {
-            moneyElement.textContent = this.money;
+            moneyElement.textContent = Math.floor(this.money);
         }
     }
     
@@ -139,8 +139,8 @@ class ShopSystem {
             const img = document.createElement('img');
             img.className = 'pokeball-option-image';
             img.alt = data.name;
-            img.width = 96;
-            img.height = 96;
+            img.width = 64;
+            img.height = 64;
             
             try {
                 const pokeballImg = await this.imageManager.getPokeballImage(type);
@@ -160,14 +160,14 @@ class ShopSystem {
                     </div>
                 </div>
                 <button class="open-pokeball-btn" ${count === 0 ? 'disabled' : ''}>
-                    Открыть
+                    Открыть (${count})
                 </button>
             `;
             
             const btn = option.querySelector('.open-pokeball-btn');
             btn.addEventListener('click', () => {
                 this.openPokeball(type);
-                this.createPokeballUI(); // Обновляем UI
+                this.createPokeballUI();
             });
             
             optionsContainer.appendChild(option);
@@ -209,13 +209,16 @@ class ShopSystem {
                     <h4>${item.name}</h4>
                     <span class="price"><i class="fas fa-coins"></i> ${item.price}</span>
                 </div>
-                <button class="buy-btn" data-type="${item.type}">Купить</button>
+                <button class="buy-btn" data-type="${item.type}">
+                    Купить
+                </button>
             `;
             
             const buyBtn = itemElement.querySelector('.buy-btn');
             buyBtn.addEventListener('click', () => {
                 const result = this.buyPokeball(item.type);
                 this.game.showNotification(result.message, result.success ? 'success' : 'error');
+                this.createShopUI(); // Обновляем цены
             });
             
             shopItems.appendChild(itemElement);

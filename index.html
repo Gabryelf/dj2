@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokemon Clicker Battle</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="components.css">
+    <!--<link rel="stylesheet" href="components.css">-->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
@@ -96,7 +96,15 @@
 
                 <!-- Команда игрока -->
                 <div class="player-team">
-                    <h3><i class="fas fa-users"></i> Твоя команда</h3>
+                    <h3><i class="fas fa-users"></i> Твоя команда 
+                        <div class="team-stats">
+                        <div class="total-damage">
+                            <i class="fas fa-bolt"></i>
+                            <span>Общий урон: </span>
+                            <span id="total-damage">0</span>
+                        </div>
+                    </div></h3>
+                    
                     <div class="team-slots" id="team-slots">
                         <div class="team-slot empty">
                             <i class="fas fa-plus"></i>
@@ -111,13 +119,7 @@
                             <span>Добавить</span>
                         </div>
                     </div>
-                    <div class="team-stats">
-                        <div class="total-damage">
-                            <i class="fas fa-bolt"></i>
-                            <span>Общий урон: </span>
-                            <span id="total-damage">0</span>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
 

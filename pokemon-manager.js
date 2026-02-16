@@ -1,36 +1,93 @@
 // ==============================
-// МЕНЕДЖЕР ПОКЕМОНОВ
+// МЕНЕДЖЕР ПОКЕМОНОВ С СИСТЕМОЙ СЛИЯНИЯ
 // ==============================
 
 class PokemonManager {
-    constructor(atlasManager) {
-        this.atlasManager = atlasManager;
+    constructor() {
         this.collection = [];
         this.team = [];
         this.maxTeamSize = GAME_CONFIG.MAX_TEAM_SIZE;
+        this.mergeCallbacks = [];
+    }
+    
+    onMerge(callback) {
+        this.mergeCallbacks.push(callback);
     }
     
     addToCollection(pokemonId) {
-        const pokemonData = GAME_CONFIG.POKEMON_SPRITES[pokemonId];
+        const pokemonData = GAME_CONFIG.POKEMON_DATA[pokemonId];
         if (!pokemonData) return null;
         
-        const newPokemon = {
+        // Проверяем, есть ли уже такой покемон в коллекции
+        const existingPokemon = this.collection.find(p => p.id === pokemonId);
+        
+        if (existingPokemon) {
+            // Сливаем покемонов
+            return this.mergePokemon(existingPokemon);
+        } else {
+            // Создаем нового покемона
+            const newPokemon = this.createPokemon(pokemonId, pokemonData);
+            this.collection.push(newPokemon);
+            return newPokemon;
+        }
+    }
+    
+    createPokemon(pokemonId, data) {
+        const baseDamage = data.baseDamage * GAME_CONFIG.RARITIES[data.rarity].damageMultiplier;
+        
+        return {
             id: pokemonId,
-            name: pokemonData.name,
-            types: [...pokemonData.types],
-            rarity: pokemonData.rarity,
-            baseDamage: pokemonData.baseDamage,
+            name: data.name,
+            types: [...data.types],
+            rarity: data.rarity,
+            baseDamage: data.baseDamage,
             level: 1,
-            currentDamage: pokemonData.baseDamage * GAME_CONFIG.RARITIES[pokemonData.rarity].damageMultiplier,
+            currentDamage: baseDamage,
             energy: GAME_CONFIG.MAX_ENERGY,
             maxEnergy: GAME_CONFIG.MAX_ENERGY,
             isInTeam: false,
-            atlasX: pokemonData.atlasX,
-            atlasY: pokemonData.atlasY
+            imageKey: data.imageKey,
+            mergeCount: 0,
+            damageMultiplier: 1.0
         };
+    }
+    
+    mergePokemon(existingPokemon) {
+        // Сохраняем старые значения для анимации
+        const oldLevel = existingPokemon.level;
+        const oldDamage = existingPokemon.currentDamage;
         
-        this.collection.push(newPokemon);
-        return newPokemon;
+        // Увеличиваем уровень
+        existingPokemon.level++;
+        existingPokemon.mergeCount++;
+        
+        // Расчет нового урона с уменьшающейся прибавкой
+        // Формула: новый урон = база * множитель редкости * (1 + log2(уровень) * 0.3)
+        const rarityMultiplier = GAME_CONFIG.RARITIES[existingPokemon.rarity].damageMultiplier;
+        const levelBonus = Math.log2(existingPokemon.level + 1) * 0.3;
+        const newDamage = Math.floor(existingPokemon.baseDamage * rarityMultiplier * (1 + levelBonus));
+        
+        existingPokemon.currentDamage = newDamage;
+        
+        // Увеличиваем максимальную энергию (медленнее)
+        existingPokemon.maxEnergy = Math.floor(GAME_CONFIG.MAX_ENERGY * (1 + Math.log2(existingPokemon.level) * 0.1));
+        
+        // Восстанавливаем энергию при слиянии
+        existingPokemon.energy = existingPokemon.maxEnergy;
+        
+        // Вызываем колбэки для анимации слияния
+        this.mergeCallbacks.forEach(callback => {
+            callback({
+                pokemon: existingPokemon,
+                oldLevel: oldLevel,
+                newLevel: existingPokemon.level,
+                oldDamage: oldDamage,
+                newDamage: existingPokemon.currentDamage,
+                mergeCount: existingPokemon.mergeCount
+            });
+        });
+        
+        return existingPokemon;
     }
     
     addToTeam(pokemonId) {
@@ -75,7 +132,7 @@ class PokemonManager {
     }
     
     getTeamDamage() {
-        return this.team.reduce((sum, pokemon) => sum + pokemon.currentDamage, 0);
+        return Math.floor(this.team.reduce((sum, pokemon) => sum + pokemon.currentDamage, 0));
     }
     
     restoreEnergy() {
@@ -108,7 +165,16 @@ class PokemonManager {
             return true;
         });
         
-        return totalDamage;
+        return Math.floor(totalDamage);
+    }
+    
+    // Метод для отображения целых чисел
+    getDisplayDamage(pokemon) {
+        return Math.floor(pokemon.currentDamage);
+    }
+    
+    getDisplayEnergy(pokemon) {
+        return Math.floor(pokemon.energy);
     }
 }
 

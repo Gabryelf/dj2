@@ -1,5 +1,5 @@
 // ==============================
-// ГЛАВНЫЙ КЛАСС ИГРЫ (ОБНОВЛЕННЫЙ)
+// ГЛАВНЫЙ КЛАСС ИГРЫ С ПОДДЕРЖКОЙ СЛИЯНИЯ
 // ==============================
 
 class PokemonClickerGame {
@@ -45,32 +45,41 @@ class PokemonClickerGame {
             this.battleSystem = new BattleSystem(this.pokemonManager, this, this.imageManager);
             this.uiManager = new UIManager(this, this.imageManager);
             
-            // 5. Инициализируем UI
+            // 5. Подписываемся на события слияния
+            this.pokemonManager.onMerge((mergeData) => {
+                this.uiManager.showMergeAnimation(mergeData);
+                this.showNotification(
+                    `${mergeData.pokemon.name} достиг ${mergeData.newLevel} уровня!`,
+                    'success'
+                );
+            });
+            
+            // 6. Инициализируем UI
             this.animationManager.initCSSAnimations();
             this.uiManager.initEventListeners();
             
-            // 6. Инициализируем туториал
+            // 7. Инициализируем туториал
             this.tutorialSystem = new TutorialSystem(this);
             
-            // 7. Создаем первого противника
+            // 8. Создаем первого противника
             if (!this.battleSystem.currentEnemy) {
                 this.battleSystem.createNewEnemy();
             }
             
-            // 8. Обновляем UI
-            this.uiManager.updateUI();
+            // 9. Обновляем UI
+            await this.uiManager.updateUI();
             
-            // 9. Запускаем таймеры
+            // 10. Запускаем таймеры
             this.startEnergyRestore();
             this.startAutoSave();
             
-            // 10. Блокируем кнопку атаки до завершения туториала
+            // 11. Блокируем кнопку атаки до завершения туториала
             const attackButton = document.getElementById('attack-button');
             if (attackButton) {
                 attackButton.disabled = true;
             }
             
-            // 11. Инициализируем звуки
+            // 12. Инициализируем звуки
             if (typeof GameSoundGenerator !== 'undefined') {
                 GameSoundGenerator.init();
                 document.addEventListener('click', function activateSound() {
@@ -79,7 +88,7 @@ class PokemonClickerGame {
                 }, { once: true });
             }
             
-            // 12. Обновляем изображения покеболов
+            // 13. Обновляем изображения покеболов
             await updatePokeballImages(this.imageManager);
             
             this.isInitialized = true;
@@ -181,7 +190,7 @@ class PokemonClickerGame {
                 const y = rect.top;
                 
                 this.animationManager.createDamageEffect(
-                    result.damage, 
+                    Math.floor(result.damage), 
                     x, 
                     y, 
                     result.damage > 50
@@ -314,8 +323,8 @@ class PokemonClickerGame {
         if (this.autoSaveInterval) {
             clearInterval(this.autoSaveInterval);
         }
-        if (this.battleSystem && this.battleSystem.autoAttackInterval) {
-            clearInterval(this.battleSystem.autoAttackInterval);
+        if (this.battleSystem) {
+            this.battleSystem.cleanup();
         }
         
         this.saveGame();
@@ -334,7 +343,7 @@ window.addEventListener('load', async () => {
     });
     
     document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space') {
+        if (e.code === 'Space' && !e.repeat) {
             e.preventDefault();
             game.manualAttack();
         }
