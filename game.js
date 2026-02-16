@@ -1,20 +1,20 @@
 // ==============================
-// ГЛАВНЫЙ КЛАСС ИГРЫ
+// ГЛАВНЫЙ КЛАСС ИГРЫ (ОБНОВЛЕННЫЙ)
 // ==============================
 
 class PokemonClickerGame {
     constructor() {
         // Системы
         this.saveManager = new SaveManager();
-        this.pokemonManager = null; // Инициализируем после загрузки атласов
+        this.pokemonManager = null;
         this.shopSystem = null;
         this.battleSystem = null;
         this.uiManager = null;
         this.animationManager = new AnimationManager();
         this.tutorialSystem = null;
         
-        // Атлас менеджер
-        this.atlasManager = null;
+        // Менеджер изображений
+        this.imageManager = null;
         
         // Состояние
         this.gameState = null;
@@ -29,21 +29,21 @@ class PokemonClickerGame {
         console.log('🚀 Инициализация Pokemon Clicker Game...');
         
         try {
-            // 1. Инициализируем атласы
-            this.atlasManager = GameUtils.initAtlases(GAME_CONFIG);
+            // 1. Инициализируем менеджер изображений
+            this.imageManager = new ImageManager(IMAGE_CONFIG);
             
-            // 2. Ждем загрузки всех атласов
-            await this.atlasManager.waitForAll();
-            console.log('✅ Все атласы загружены!');
+            // 2. Предзагружаем изображения
+            await this.imageManager.preloadAll();
+            console.log('✅ Все изображения загружены!');
             
             // 3. Загружаем сохранение
             this.loadGame();
             
-            // 4. Инициализируем системы с атласами
-            this.pokemonManager = new PokemonManager(this.atlasManager);
-            this.shopSystem = new ShopSystem(this.pokemonManager, this.atlasManager, this); // Передаем this
-            this.battleSystem = new BattleSystem(this.pokemonManager, this, this.atlasManager);
-            this.uiManager = new UIManager(this, this.atlasManager);
+            // 4. Инициализируем системы
+            this.pokemonManager = new PokemonManager();
+            this.shopSystem = new ShopSystem(this.pokemonManager, this, this.imageManager);
+            this.battleSystem = new BattleSystem(this.pokemonManager, this, this.imageManager);
+            this.uiManager = new UIManager(this, this.imageManager);
             
             // 5. Инициализируем UI
             this.animationManager.initCSSAnimations();
@@ -80,7 +80,7 @@ class PokemonClickerGame {
             }
             
             // 12. Обновляем изображения покеболов
-            await GameUtils.updatePokeballImages(this.atlasManager, GAME_CONFIG);
+            await updatePokeballImages(this.imageManager);
             
             this.isInitialized = true;
             console.log('✅ Игра успешно инициализирована!');
@@ -88,10 +88,6 @@ class PokemonClickerGame {
         } catch (error) {
             console.error('❌ Ошибка инициализации игры:', error);
         }
-
-                // После await this.atlasManager.waitForAll();
-        console.log('✅ Все атласы загружены!');
-        GameUtils.debugAtlases(this.atlasManager); // Добавьте эту строку
     }
     
     loadGame() {
@@ -125,21 +121,17 @@ class PokemonClickerGame {
         }
     }
     
-    // В game.js, метод addStarterPokemon
     addStarterPokemon() {
-        // Добавляем случайного обычного покемона (Раттата или Пиджи)
-        const starterPokemonIds = [1, 2]; // ID из конфига
+        const starterPokemonIds = [1, 2];
         const randomId = starterPokemonIds[Math.floor(Math.random() * starterPokemonIds.length)];
         
         const pokemon = this.pokemonManager.addToCollection(randomId);
         
         if (pokemon) {
-            // Автоматически добавляем в команду
             const result = this.pokemonManager.addToTeam(pokemon.id);
             if (result.success) {
                 console.log('🎁 Добавлен стартовый покемон:', pokemon.name);
                 
-                // Разблокируем кнопку атаки
                 const attackButton = document.getElementById('attack-button');
                 if (attackButton) {
                     attackButton.disabled = false;

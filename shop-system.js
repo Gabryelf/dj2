@@ -1,12 +1,12 @@
 // ==============================
-// СИСТЕМА МАГАЗИНА
+// СИСТЕМА МАГАЗИНА (ОБНОВЛЕННАЯ)
 // ==============================
 
 class ShopSystem {
-    constructor(pokemonManager, atlasManager, game) {
+    constructor(pokemonManager, game, imageManager) {
         this.pokemonManager = pokemonManager;
-        this.atlasManager = atlasManager;
-        this.game = game; // Добавляем ссылку на игру для уведомлений
+        this.game = game;
+        this.imageManager = imageManager;
         this.money = GAME_CONFIG.STARTING_MONEY;
         this.pokeballs = { ...GAME_CONFIG.STARTING_POKEBALLS };
     }
@@ -14,7 +14,6 @@ class ShopSystem {
     addMoney(amount) {
         this.money += amount;
         this.updateMoneyDisplay();
-        return this.money;
     }
     
     spendMoney(amount) {
@@ -48,312 +47,179 @@ class ShopSystem {
         if (mythicCount) mythicCount.textContent = this.pokeballs.MYTHIC;
     }
     
-    async createPokeballUI() {
-        const container = document.getElementById('pokeball-options');
-        if (!container) return;
+    buyPokeball(type) {
+        let price;
+        let ballType;
         
-        const pokeballs = GameUtils.getAllPokeballs(GAME_CONFIG);
-        container.innerHTML = '';
-        
-        for (const pokeball of pokeballs) {
-            const count = this.pokeballs[pokeball.type];
-            
-            const option = document.createElement('div');
-            option.className = 'pokeball-option';
-            option.dataset.type = pokeball.type;
-            
-            // Создаем canvas для покебола
-            const canvas = document.createElement('canvas');
-            canvas.width = 80;
-            canvas.height = 80;
-            canvas.className = 'pokeball-canvas';
-            
-            const ctx = canvas.getContext('2d');
-            GameUtils.drawPokeball(
-                ctx,
-                this.atlasManager,
-                pokeball.type,
-                GAME_CONFIG,
-                0, 0,
-                80, 80
-            );
-            
-            const price = GAME_CONFIG.SHOP_PRICES[pokeball.type + '_BALL'];
-            
-            option.innerHTML = `
-                ${canvas.outerHTML}
-                <div class="pokeball-info">
-                    <h3 style="color: ${pokeball.color}">${pokeball.name}</h3>
-                    <p>${pokeball.description}</p>
-                    <div class="pokeball-stats">
-                        <span><strong>В наличии:</strong> ${count}</span>
-                        <span><strong>Цена:</strong> ${price} монет</span>
-                    </div>
-                </div>
-                <button class="open-btn" ${count === 0 ? 'disabled' : ''}>
-                    Открыть (${count})
-                </button>
-            `;
-            
-            const openBtn = option.querySelector('.open-btn');
-            openBtn.addEventListener('click', () => this.openPokeball(pokeball.type));
-            
-            container.appendChild(option);
+        switch(type) {
+            case 'NORMAL':
+                price = GAME_CONFIG.SHOP_PRICES.NORMAL_BALL;
+                ballType = 'NORMAL';
+                break;
+            case 'MASTER':
+                price = GAME_CONFIG.SHOP_PRICES.MASTER_BALL;
+                ballType = 'MASTER';
+                break;
+            case 'MYTHIC':
+                price = GAME_CONFIG.SHOP_PRICES.MYTHIC_BALL;
+                ballType = 'MYTHIC';
+                break;
+            default:
+                return { success: false, message: 'Неизвестный тип покебола' };
         }
-    }
-    
-    createShopUI() {
-        const container = document.getElementById('shop-items');
-        if (!container) return;
         
-        container.innerHTML = '';
-        
-        const items = [
-            {
-                type: 'NORMAL_BALL',
-                name: 'Покебол',
-                description: 'Обычный покебол. Шанс получить обычного или необычного покемона.',
-                price: GAME_CONFIG.SHOP_PRICES.NORMAL_BALL
-            },
-            {
-                type: 'MASTER_BALL',
-                name: 'Мастербол',
-                description: 'Редкий покебол. Высокий шанс получить редких и эпических покемонов.',
-                price: GAME_CONFIG.SHOP_PRICES.MASTER_BALL
-            },
-            {
-                type: 'MYTHIC_BALL',
-                name: 'Мификбол',
-                description: 'Легендарный покебол. Максимальный шанс получить легендарных покемонов.',
-                price: GAME_CONFIG.SHOP_PRICES.MYTHIC_BALL
-            },
-            {
-                type: 'ENERGY_RESTORE',
-                name: 'Восстановление энергии',
-                description: 'Полностью восстанавливает энергию одному покемону.',
-                price: GAME_CONFIG.SHOP_PRICES.ENERGY_RESTORE
-            },
-            {
-                type: 'TEAM_EXPANDER',
-                name: 'Расширитель команды',
-                description: 'Увеличивает максимальный размер команды на 1.',
-                price: GAME_CONFIG.SHOP_PRICES.TEAM_EXPANDER
-            }
-        ];
-        
-        items.forEach(item => {
-            const shopItem = document.createElement('div');
-            shopItem.className = 'shop-item';
-            
-            shopItem.innerHTML = `
-                <h3>${item.name}</h3>
-                <p>${item.description}</p>
-                <div class="price">
-                    <i class="fas fa-coins"></i>
-                    <span>${item.price}</span>
-                </div>
-                <button class="buy-btn" data-type="${item.type}">
-                    Купить
-                </button>
-            `;
-            
-            const buyBtn = shopItem.querySelector('.buy-btn');
-            buyBtn.addEventListener('click', () => this.buyItem(item.type, item.price));
-            
-            container.appendChild(shopItem);
-        });
-    }
-    
-    buyItem(itemType, price) {
         if (this.spendMoney(price)) {
-            // Воспроизводим звук покупки
-            if (window.GameSoundGenerator && window.GameSoundGenerator.playCoin) {
-                window.GameSoundGenerator.playCoin();
-            }
-            
-            switch(itemType) {
-                case 'NORMAL_BALL':
-                    this.pokeballs.NORMAL++;
-                    break;
-                case 'MASTER_BALL':
-                    this.pokeballs.MASTER++;
-                    break;
-                case 'MYTHIC_BALL':
-                    this.pokeballs.MYTHIC++;
-                    break;
-                case 'ENERGY_RESTORE':
-                    this.showPokemonSelectionForEnergy();
-                    return; // Не показываем уведомление здесь, оно покажется в методе восстановления
-                case 'TEAM_EXPANDER':
-                    this.pokemonManager.maxTeamSize++;
-                    break;
-            }
-            
+            this.pokeballs[ballType]++;
             this.updatePokeballsDisplay();
-            if (this.game && this.game.showNotification) {
-                this.game.showNotification('Покупка успешна!', 'success');
-            }
+            this.game.saveGame();
+            return { success: true, message: `Куплен ${GAME_CONFIG.POKEBALL_DATA[ballType].name}` };
         } else {
-            if (this.game && this.game.showNotification) {
-                this.game.showNotification('Недостаточно средств!', 'error');
-            }
+            return { success: false, message: 'Недостаточно поке-баксов' };
         }
     }
     
-    openPokeball(pokeballType) {
-        if (this.pokeballs[pokeballType] <= 0) {
-            if (this.game && this.game.showNotification) {
-                this.game.showNotification('У вас нет таких покеболов!', 'warning');
-            }
-            return;
+    openPokeball(type) {
+        if (this.pokeballs[type] <= 0) {
+            this.game.showNotification('У вас нет таких покеболов!', 'error');
+            return null;
         }
         
-        this.pokeballs[pokeballType]--;
+        this.pokeballs[type]--;
         this.updatePokeballsDisplay();
         
-        // Воспроизводим звук открытия
-        if (window.GameSoundGenerator && window.GameSoundGenerator.playPokeballOpen) {
-            window.GameSoundGenerator.playPokeballOpen();
-        }
-        
-        const randomPokemonId = this.getRandomPokemonByPokeball(pokeballType);
-        const newPokemon = this.pokemonManager.addToCollection(randomPokemonId);
-        
-        if (newPokemon) {
-            if (this.game && this.game.showNotification) {
-                this.game.showNotification(`Вы получили ${newPokemon.name}!`, 'success');
-            }
-            
-            // Воспроизводим звук покемона
-            if (window.GameSoundGenerator && window.GameSoundGenerator.playPokemonCry) {
-                window.GameSoundGenerator.playPokemonCry();
-            }
-            
-            // Обновляем UI коллекции
-            const collectionModal = document.getElementById('collection-modal');
-            if (collectionModal && collectionModal.style.display === 'block') {
-                if (this.game && this.game.uiManager) {
-                    this.game.uiManager.createCollectionUI();
-                }
-            }
-        }
-    }
-    
-    getRandomPokemonByPokeball(pokeballType) {
-        const rates = GAME_CONFIG.POKEBALL_RATES[pokeballType];
-        const pokemonList = Object.entries(GAME_CONFIG.POKEMON_SPRITES);
-        
+        const rates = GAME_CONFIG.POKEBALL_RATES[type];
         const random = Math.random() * 100;
+        
         let cumulative = 0;
+        let selectedRarity = 'COMMON';
         
         for (const [rarity, chance] of Object.entries(rates)) {
             cumulative += chance;
             if (random <= cumulative) {
-                const filteredPokemon = pokemonList.filter(([id, data]) => data.rarity === rarity);
-                if (filteredPokemon.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * filteredPokemon.length);
-                    return parseInt(filteredPokemon[randomIndex][0]);
-                }
+                selectedRarity = rarity;
+                break;
             }
         }
         
-        // Если ничего не выпало, возвращаем первого покемона
-        return 1;
-    }
-    
-    showPokemonSelectionForEnergy() {
-        const availablePokemon = this.pokemonManager.collection.filter(p => p.energy < p.maxEnergy);
+        const availablePokemon = Object.entries(GAME_CONFIG.POKEMON_DATA)
+            .filter(([id, data]) => data.rarity === selectedRarity);
         
         if (availablePokemon.length === 0) {
-            if (this.game && this.game.showNotification) {
-                this.game.showNotification('Нет покемонов, нуждающихся в восстановлении!', 'info');
-            }
-            return;
+            this.game.showNotification('Ошибка: нет покемонов этой редкости', 'error');
+            return null;
         }
         
-        // Создаем временное модальное окно для выбора покемона
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.display = 'block';
+        const [pokemonId, pokemonData] = availablePokemon[
+            Math.floor(Math.random() * availablePokemon.length)
+        ];
         
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 600px;">
-                <div class="modal-header">
-                    <h2>Выберите покемона для восстановления</h2>
-                    <span class="close">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div class="available-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
-                        ${availablePokemon.map(p => `
-                            <div class="pokemon-card selectable" data-id="${p.id}">
-                                <canvas id="pokemon-canvas-${p.id}" width="100" height="100"></canvas>
-                                <h4>${p.name}</h4>
-                                <div class="pokemon-stats">
-                                    <div>Энергия: ${Math.round((p.energy / p.maxEnergy) * 100)}%</div>
-                                </div>
-                                <button class="restore-btn">Восстановить</button>
-                            </div>
-                        `).join('')}
+        const newPokemon = this.pokemonManager.addToCollection(parseInt(pokemonId));
+        
+        if (newPokemon) {
+            this.game.showNotification(`Вы получили ${newPokemon.name}!`, 'success');
+            this.game.saveGame();
+        }
+        
+        return newPokemon;
+    }
+    
+    async createPokeballUI() {
+        const optionsContainer = document.getElementById('pokeball-options');
+        if (!optionsContainer) return;
+        
+        optionsContainer.innerHTML = '';
+        
+        for (const [type, data] of Object.entries(GAME_CONFIG.POKEBALL_DATA)) {
+            const count = this.pokeballs[type] || 0;
+            
+            const option = document.createElement('div');
+            option.className = 'pokeball-option';
+            option.dataset.type = type;
+            
+            const img = document.createElement('img');
+            img.className = 'pokeball-option-image';
+            img.alt = data.name;
+            img.width = 96;
+            img.height = 96;
+            
+            try {
+                const pokeballImg = await this.imageManager.getPokeballImage(type);
+                img.src = pokeballImg.src;
+            } catch (e) {
+                console.error(`❌ Ошибка загрузки изображения покебола ${type}:`, e);
+            }
+            
+            option.innerHTML = `
+                ${img.outerHTML}
+                <div class="pokeball-option-info">
+                    <h3>${data.name}</h3>
+                    <p>${data.description}</p>
+                    <div class="pokeball-stats">
+                        <span><i class="fas fa-coins"></i> ${data.price}</span>
+                        <span><i class="fas fa-box"></i> ${count} шт.</span>
                     </div>
                 </div>
-            </div>
-        `;
-        
-        document.body.appendChild(modal);
-        
-        // Рисуем покемонов
-        availablePokemon.forEach(p => {
-            const canvas = document.getElementById(`pokemon-canvas-${p.id}`);
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                GameUtils.drawPokemon(
-                    ctx,
-                    this.atlasManager,
-                    p.id,
-                    GAME_CONFIG,
-                    0, 0,
-                    100, 100
-                );
-            }
-        });
-        
-        // Обработчики
-        const closeBtn = modal.querySelector('.close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                modal.remove();
+                <button class="open-pokeball-btn" ${count === 0 ? 'disabled' : ''}>
+                    Открыть
+                </button>
+            `;
+            
+            const btn = option.querySelector('.open-pokeball-btn');
+            btn.addEventListener('click', () => {
+                this.openPokeball(type);
+                this.createPokeballUI(); // Обновляем UI
             });
+            
+            optionsContainer.appendChild(option);
         }
+    }
+    
+    async createShopUI() {
+        const shopItems = document.getElementById('shop-items');
+        if (!shopItems) return;
         
-        const restoreBtns = modal.querySelectorAll('.restore-btn');
-        restoreBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const card = e.target.closest('.pokemon-card');
-                const pokemonId = parseInt(card.dataset.id);
-                const pokemon = this.pokemonManager.getPokemonById(pokemonId);
-                
-                if (pokemon) {
-                    pokemon.energy = pokemon.maxEnergy;
-                    
-                    // Воспроизводим звук восстановления
-                    if (window.GameSoundGenerator && window.GameSoundGenerator.playEnergyRestore) {
-                        window.GameSoundGenerator.playEnergyRestore();
-                    }
-                    
-                    if (this.game && this.game.showNotification) {
-                        this.game.showNotification(`Энергия ${pokemon.name} восстановлена!`, 'success');
-                    }
-                    
-                    modal.remove();
-                }
-            });
-        });
+        shopItems.innerHTML = '';
         
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
+        const items = [
+            { type: 'NORMAL', name: 'Покебол', price: GAME_CONFIG.SHOP_PRICES.NORMAL_BALL },
+            { type: 'MASTER', name: 'Мастербол', price: GAME_CONFIG.SHOP_PRICES.MASTER_BALL },
+            { type: 'MYTHIC', name: 'Мификбол', price: GAME_CONFIG.SHOP_PRICES.MYTHIC_BALL }
+        ];
+        
+        for (const item of items) {
+            const itemElement = document.createElement('div');
+            itemElement.className = 'shop-item';
+            
+            const img = document.createElement('img');
+            img.className = 'shop-item-image';
+            img.alt = item.name;
+            img.width = 64;
+            img.height = 64;
+            
+            try {
+                const pokeballImg = await this.imageManager.getPokeballImage(item.type);
+                img.src = pokeballImg.src;
+            } catch (e) {
+                console.error(`❌ Ошибка загрузки изображения ${item.name}:`, e);
             }
-        });
+            
+            itemElement.innerHTML = `
+                ${img.outerHTML}
+                <div class="shop-item-info">
+                    <h4>${item.name}</h4>
+                    <span class="price"><i class="fas fa-coins"></i> ${item.price}</span>
+                </div>
+                <button class="buy-btn" data-type="${item.type}">Купить</button>
+            `;
+            
+            const buyBtn = itemElement.querySelector('.buy-btn');
+            buyBtn.addEventListener('click', () => {
+                const result = this.buyPokeball(item.type);
+                this.game.showNotification(result.message, result.success ? 'success' : 'error');
+            });
+            
+            shopItems.appendChild(itemElement);
+        }
     }
 }
 

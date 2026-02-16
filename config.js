@@ -17,13 +17,13 @@ const CONFIG = {
     
     // Настройки боя
     BASE_ENEMY_HP: 100,
-    ENEMY_HP_MULTIPLIER: 1.5, // Умножается на уровень
-    REWARD_MULTIPLIER: 10, // Награда за победу = уровень * множитель
+    ENEMY_HP_MULTIPLIER: 1.5,
+    REWARD_MULTIPLIER: 10,
     
     // Авто-атака
-    AUTO_ATTACK_INTERVAL: 3000, // 3 секунды
+    AUTO_ATTACK_INTERVAL: 3000,
     
-    // Типы покемонов и их взаимодействия
+    // Типы покемонов
     POKEMON_TYPES: {
         NORMAL: { strong: [], weak: ['FIGHTING'] },
         FIRE: { strong: ['GRASS', 'ICE', 'BUG'], weak: ['WATER', 'ROCK', 'GROUND'] },
@@ -52,7 +52,7 @@ const CONFIG = {
         LEGENDARY: { name: 'Легендарный', color: '#ffd700', weight: 3, damageMultiplier: 3.5 }
     },
     
-    // Шансы выпадения из покеболов (в процентах)
+    // Шансы выпадения из покеболов
     POKEBALL_RATES: {
         NORMAL: {
             COMMON: 60,
@@ -85,8 +85,8 @@ const CONFIG = {
         NORMAL_BALL: 10,
         MASTER_BALL: 100,
         MYTHIC_BALL: 500,
-        ENERGY_RESTORE: 50, // Восстанавливает всю энергию одному покемону
-        TEAM_EXPANDER: 1000 // Увеличивает максимальный размер команды
+        ENERGY_RESTORE: 50,
+        TEAM_EXPANDER: 1000
     },
     
     // Максимальный размер команды
@@ -94,269 +94,191 @@ const CONFIG = {
     
     // Энергия покемонов
     MAX_ENERGY: 100,
-    ENERGY_DECAY_PER_ATTACK: 1, // Сколько энергии тратит покемон за атаку
-    ENERGY_RESTORE_PER_SECOND: 0.1, // Сколько восстанавливается в секунду вне команды
+    ENERGY_DECAY_PER_ATTACK: 1,
+    ENERGY_RESTORE_PER_SECOND: 0.1,
     
-    // ============================================
-    // НАСТРОЙКИ АТЛАСОВ (НОВЫЙ ФОРМАТ)
-    // ============================================
-    
-    // Настройки атласа покемонов
-    ATLAS: {
-        POKEMON: {
-            image: './images/game/pokemons/pokemons.png',  // Путь к общему атласу покемонов
-            tileWidth: 128,   // Ширина одного спрайта в пикселях
-            tileHeight: 128,  // Высота одного спрайта в пикселях
-            columns: 9      // Количество колонок в атласе (можно вычислить автоматически, если указать null)
-        },
-        ENEMIES: {
-            image: './images/game/enemies/pokemons.png',  // Путь к общему атласу противников
-            tileWidth: 128,
-            tileHeight: 128,
-            columns: 9
-        },
-        POKEBALLS: {  
-            image: './images/game/pokeballs/pokeballs.png',
-            tileWidth: 96,  
-            tileHeight: 96,
-            columns: 3      // 3 типа покеболов
-        }
-    },
-    
-    // Данные покемонов с координатами в атласе
-    POKEMON_SPRITES: {
-        // Обычные (ряд 0)
+    // Данные покемонов (без координат атласа)
+    POKEMON_DATA: {
         1: { 
             name: 'Раттата', 
             rarity: 'COMMON', 
             types: ['NORMAL'], 
             baseDamage: 5,
-            atlasX: 0,  // колонка 0, ряд 0
-            atlasY: 0
+            imageKey: 'rattata'
         },
         2: { 
             name: 'Пиджи', 
             rarity: 'COMMON', 
             types: ['NORMAL', 'FLYING'], 
             baseDamage: 4,
-            atlasX: 1,
-            atlasY: 0
+            imageKey: 'pidgey'
         },
-        
-        // Повсеместные (ряд 0)
         3: { 
             name: 'Бульбазавр', 
             rarity: 'UNCOMMON', 
             types: ['GRASS', 'POISON'], 
             baseDamage: 8,
-            atlasX: 2,
-            atlasY: 0
+            imageKey: 'bulbasaur'
         },
         4: { 
             name: 'Чармандер', 
             rarity: 'UNCOMMON', 
             types: ['FIRE'], 
             baseDamage: 9,
-            atlasX: 3,
-            atlasY: 0
+            imageKey: 'charmander'
         },
-        
-        // Редкие (ряд 0)
         5: { 
             name: 'Сквиртл', 
             rarity: 'RARE', 
             types: ['WATER'], 
             baseDamage: 12,
-            atlasX: 4,
-            atlasY: 0
+            imageKey: 'squirtle'
         },
         6: { 
             name: 'Пикачу', 
             rarity: 'RARE', 
             types: ['ELECTRIC'], 
             baseDamage: 15,
-            atlasX: 5,
-            atlasY: 0
+            imageKey: 'pikachu'
         },
-        
-        // Эпические (ряд 0)
         7: { 
             name: 'Иви', 
             rarity: 'EPIC', 
             types: ['NORMAL'], 
             baseDamage: 25,
-            atlasX: 6,
-            atlasY: 0
+            imageKey: 'eevee'
         },
         8: { 
             name: 'Дратини', 
             rarity: 'EPIC', 
             types: ['DRAGON'], 
             baseDamage: 30,
-            atlasX: 7,
-            atlasY: 0
+            imageKey: 'dratini'
         },
-        
-        // Специальные (ряд 0)
         9: { 
             name: 'Снорлакс', 
             rarity: 'SPECIAL', 
             types: ['NORMAL'], 
             baseDamage: 40,
-            atlasX: 8,
-            atlasY: 0
+            imageKey: 'snorlax'
         },
         10: { 
             name: 'Лапрас', 
             rarity: 'SPECIAL', 
             types: ['WATER', 'ICE'], 
             baseDamage: 35,
-            atlasX: 9,
-            atlasY: 0
+            imageKey: 'lapras'
         },
-        
-        // Легендарные (ряд 1)
         11: { 
             name: 'Мью', 
             rarity: 'LEGENDARY', 
             types: ['PSYCHIC'], 
             baseDamage: 80,
-            atlasX: 0,
-            atlasY: 1
+            imageKey: 'mew'
         },
         12: { 
             name: 'Мьюту', 
             rarity: 'LEGENDARY', 
             types: ['PSYCHIC'], 
             baseDamage: 90,
-            atlasX: 1,
-            atlasY: 1
+            imageKey: 'mewtwo'
         },
-        
-        // Можно добавить еще ряд 1 для других легендарных
         13: { 
             name: 'Хупа', 
             rarity: 'LEGENDARY', 
             types: ['PSYCHIC', 'GHOST'], 
             baseDamage: 85,
-            atlasX: 2,
-            atlasY: 1
-        },
-        
-        // Добавьте больше покемонов по аналогии
+            imageKey: 'hoopa'
+        }
     },
     
-    // Данные противников с координатами в атласе
-    ENEMY_SPRITES: [
+    // Данные противников
+    ENEMY_DATA: [
         { 
             name: 'Раттата', 
             rarity: 'COMMON', 
             types: ['NORMAL'],
-            atlasX: 0,
-            atlasY: 0
+            imageKey: 'rattata'
         },
         { 
             name: 'Зубат', 
             rarity: 'COMMON', 
             types: ['POISON', 'FLYING'],
-            atlasX: 1,
-            atlasY: 0
+            imageKey: 'zubat'
         },
         { 
             name: 'Мяут', 
             rarity: 'UNCOMMON', 
             types: ['NORMAL'],
-            atlasX: 2,
-            atlasY: 0
+            imageKey: 'meowth'
         },
         { 
             name: 'Псидак', 
             rarity: 'UNCOMMON', 
-            types: ['BUG', 'POISON'],
-            atlasX: 3,
-            atlasY: 0
+            types: ['WATER'],
+            imageKey: 'psyduck'
         },
         { 
             name: 'Гастли', 
             rarity: 'RARE', 
             types: ['GHOST', 'POISON'],
-            atlasX: 4,
-            atlasY: 0
+            imageKey: 'gastly'
         },
         { 
             name: 'Оникс', 
             rarity: 'EPIC', 
             types: ['ROCK', 'GROUND'],
-            atlasX: 5,
-            atlasY: 0
+            imageKey: 'onix'
         },
         { 
-            name: 'Сайтрон', 
+            name: 'Сайтер', 
             rarity: 'SPECIAL', 
-            types: ['GRASS', 'POISON'],
-            atlasX: 6,
-            atlasY: 0
+            types: ['BUG', 'FLYING'],
+            imageKey: 'scyther'
         },
         { 
             name: 'Артикуно', 
             rarity: 'LEGENDARY', 
             types: ['ICE', 'FLYING'],
-            atlasX: 7,
-            atlasY: 0
+            imageKey: 'articuno'
         },
-        // Можно добавить второй ряд противников
         { 
             name: 'Молтрес', 
             rarity: 'LEGENDARY', 
             types: ['FIRE', 'FLYING'],
-            atlasX: 0,
-            atlasY: 1
+            imageKey: 'moltres'
         }
     ],
 
-    // НОВЫЙ РАЗДЕЛ: Данные покеболов с координатами в атласе
-    POKEBALL_SPRITES: {
+    // Данные покеболов
+    POKEBALL_DATA: {
         NORMAL: {
             name: 'Покебол',
             description: 'Обычный покебол. Шанс получить обычного или необычного покемона.',
             price: 10,
-            atlasX: 0,  // Колонка 0 в атласе покеболов
-            atlasY: 0,  // Ряд 0
-            color: '#ff4444'
+            color: '#ff4444',
+            imageKey: 'NORMAL'
         },
         MASTER: {
             name: 'Мастербол',
             description: 'Редкий покебол. Высокий шанс получить редких и эпических покемонов.',
             price: 100,
-            atlasX: 1,
-            atlasY: 0,
-            color: '#9c27b0'
+            color: '#9c27b0',
+            imageKey: 'MASTER'
         },
         MYTHIC: {
             name: 'Мификбол',
             description: 'Легендарный покебол. Максимальный шанс получить легендарных покемонов.',
             price: 500,
-            atlasX: 2,
-            atlasY: 0,
-            color: '#ffd700'
+            color: '#ffd700',
+            imageKey: 'MYTHIC'
         }
-    },
-    
-    // Для обратной совместимости
-    POKEBALL_IMAGES: {
-        NORMAL: './images/game/pokeballs/pokeballs.png',
-        MASTER: './images/game/pokeballs/masterballs.png',
-        MYTHIC: './images/game/pokeballs/ultraballs.png'
     }
-    
-   
 };
 
-// Для обратной совместимости, если где-то используется старый формат
-// Можно добавить прокси для доступа к старым полям
-CONFIG.POKEMON_IMAGES = CONFIG.POKEMON_SPRITES; // Для совместимости
-CONFIG.ENEMY_IMAGES = CONFIG.ENEMY_SPRITES;
+// Для обратной совместимости
+CONFIG.POKEMON_SPRITES = CONFIG.POKEMON_DATA;
+CONFIG.ENEMY_SPRITES = CONFIG.ENEMY_DATA;
+CONFIG.POKEBALL_SPRITES = CONFIG.POKEBALL_DATA;
 
-
-// Экспорт конфигурации
 window.GAME_CONFIG = CONFIG;

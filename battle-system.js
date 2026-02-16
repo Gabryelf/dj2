@@ -1,78 +1,72 @@
 // ==============================
-// БОЕВАЯ СИСТЕМА
+// СИСТЕМА БОЯ (ОБНОВЛЕННАЯ)
 // ==============================
 
 class BattleSystem {
-    constructor(pokemonManager, game, atlasManager) {
+    constructor(pokemonManager, game, imageManager) {
         this.pokemonManager = pokemonManager;
         this.game = game;
-        this.atlasManager = atlasManager;
+        this.imageManager = imageManager;
         this.currentEnemy = null;
         this.enemyLevel = 1;
         this.autoAttackInterval = null;
         
         this.createNewEnemy();
-        this.startAutoAttack();
     }
     
     createNewEnemy() {
-        const enemyData = GameUtils.getRandomEnemyAtlasCoords(GAME_CONFIG);
+        const enemies = GAME_CONFIG.ENEMY_DATA;
+        const randomEnemy = { ...enemies[Math.floor(Math.random() * enemies.length)] };
         
-        const maxHp = GAME_CONFIG.BASE_ENEMY_HP * Math.pow(GAME_CONFIG.ENEMY_HP_MULTIPLIER, this.enemyLevel - 1);
+        const baseHp = GAME_CONFIG.BASE_ENEMY_HP;
+        const hpMultiplier = GAME_CONFIG.ENEMY_HP_MULTIPLIER;
+        
+        const maxHp = Math.floor(baseHp * Math.pow(hpMultiplier, this.enemyLevel - 1));
         
         this.currentEnemy = {
-            ...enemyData,
+            ...randomEnemy,
+            id: Date.now() + Math.random(),
             hp: maxHp,
-            maxHp: maxHp
+            maxHp: maxHp,
+            level: this.enemyLevel,
+            imageKey: randomEnemy.imageKey
         };
         
-        return this.currentEnemy;
+        this.updateUI();
     }
     
     attackEnemy() {
-        if (!this.currentEnemy) return { damage: 0, defeated: false };
+        if (!this.currentEnemy) return { damage: 0 };
         
         const totalDamage = this.pokemonManager.useEnergy();
         
-        if (totalDamage === 0) {
-            return { damage: 0, defeated: false };
+        if (totalDamage <= 0) {
+            return { damage: 0 };
         }
         
-        this.currentEnemy.hp -= totalDamage;
+        this.currentEnemy.hp = Math.max(0, this.currentEnemy.hp - totalDamage);
         
-        const result = {
+        let result = {
             damage: totalDamage,
-            defeated: false,
-            enemy: null,
-            reward: 0
+            defeated: false
         };
         
         if (this.currentEnemy.hp <= 0) {
-            const oldEnemy = { ...this.currentEnemy };
+            const reward = this.enemyLevel * GAME_CONFIG.REWARD_MULTIPLIER;
+            
             result.defeated = true;
-            result.reward = this.enemyLevel * GAME_CONFIG.REWARD_MULTIPLIER;
-            result.enemy = oldEnemy;
+            result.reward = reward;
+            result.enemy = { ...this.currentEnemy };
             
             this.enemyLevel++;
             this.createNewEnemy();
         }
         
+        this.updateUI();
         return result;
     }
     
-    startAutoAttack() {
-        if (this.autoAttackInterval) {
-            clearInterval(this.autoAttackInterval);
-        }
-        
-        this.autoAttackInterval = setInterval(() => {
-            if (this.pokemonManager.team.length > 0 && this.game.isInitialized) {
-                this.game.manualAttack();
-            }
-        }, GAME_CONFIG.AUTO_ATTACK_INTERVAL);
-    }
-    
-    updateUI() {
+    async updateUI() {
         if (!this.currentEnemy) return;
         
         const enemyName = document.getElementById('enemy-name');
@@ -80,75 +74,60 @@ class BattleSystem {
         const enemyHpBar = document.getElementById('enemy-hp-bar');
         const enemyHpText = document.getElementById('enemy-hp-text');
         const enemyRarity = document.getElementById('enemy-rarity');
-        const enemyImageContainer = document.getElementById('enemy-image-container');
-        const totalDamage = document.getElementById('total-damage');
+        const enemyContainer = document.getElementById('enemy-image-container');
         
         if (enemyName) enemyName.textContent = this.currentEnemy.name;
-        if (enemyLevel) enemyLevel.textContent = this.enemyLevel;
-        
-        const hpPercent = (this.currentEnemy.hp / this.currentEnemy.maxHp) * 100;
-        if (enemyHpBar) enemyHpBar.style.width = `${hpPercent}%`;
-        if (enemyHpText) enemyHpText.textContent = `${Math.ceil(this.currentEnemy.hp)}/${Math.ceil(this.currentEnemy.maxHp)}`;
-        
+        if (enemyLevel) enemyLevel.textContent = this.currentEnemy.level;
         if (enemyRarity) {
-            const rarityData = GAME_CONFIG.RARITIES[this.currentEnemy.rarity];
-            enemyRarity.textContent = rarityData.name;
-            enemyRarity.style.color = rarityData.color;
+            const rarity = GAME_CONFIG.RARITIES[this.currentEnemy.rarity];
+            enemyRarity.textContent = rarity.name;
+            enemyRarity.style.backgroundColor = rarity.color;
         }
         
-        // Рисуем противника на canvas
-        if (enemyImageContainer) {
-            enemyImageContainer.innerHTML = ''; // Очищаем контейнер
-            
-            // Создаем canvas
-            const canvas = document.createElement('canvas');
-            canvas.width = 250;
-            canvas.height = 250;
-            canvas.style.width = '250px';
-            canvas.style.height = '250px';
-            canvas.className = 'enemy-img';
-            canvas.id = 'enemy-image';
-            
-            // Добавляем canvas в DOM
-            enemyImageContainer.appendChild(canvas);
-            
-            // Получаем контекст
-            const ctx = canvas.getContext('2d');
-            
-            // ОЧИЩАЕМ canvas для начала
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Рисуем фон для проверки
-            ctx.fillStyle = '#ffcccc';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Рисуем рамку
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(0, 0, canvas.width, canvas.height);
-            
-            // Рисуем текст
-            ctx.fillStyle = '#000000';
-            ctx.font = '20px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Тест', canvas.width/2, canvas.height/2);
-            
-            // Теперь пробуем нарисовать противника
-            console.log('🎯 Рисуем противника:', this.currentEnemy);
-            
-            const success = GameUtils.drawEnemy(
-                ctx,
-                this.atlasManager,
-                this.currentEnemy,
-                0, 0,
-                250, 250
-            );
-            
-            console.log('Результат отрисовки:', success ? '✅' : '❌');
+        if (enemyHpBar) {
+            const hpPercent = (this.currentEnemy.hp / this.currentEnemy.maxHp) * 100;
+            enemyHpBar.style.width = `${hpPercent}%`;
         }
         
+        if (enemyHpText) {
+            enemyHpText.textContent = `${Math.floor(this.currentEnemy.hp)}/${this.currentEnemy.maxHp}`;
+        }
+        
+        if (enemyContainer) {
+            enemyContainer.innerHTML = '';
+            
+            const img = document.createElement('img');
+            img.className = 'enemy-image';
+            img.alt = this.currentEnemy.name;
+            img.width = 200;
+            img.height = 200;
+            
+            try {
+                const enemyImg = await this.imageManager.getEnemyImage(this.currentEnemy.imageKey);
+                img.src = enemyImg.src;
+            } catch (e) {
+                console.error(`❌ Ошибка загрузки изображения противника:`, e);
+            }
+            
+            enemyContainer.appendChild(img);
+        }
+        
+        const totalDamage = document.getElementById('total-damage');
         if (totalDamage) {
             totalDamage.textContent = this.pokemonManager.getTeamDamage();
+        }
+    }
+    
+    toggleAutoAttack() {
+        if (this.autoAttackInterval) {
+            clearInterval(this.autoAttackInterval);
+            this.autoAttackInterval = null;
+            this.game.showNotification('Авто-атака отключена', 'info');
+        } else {
+            this.autoAttackInterval = setInterval(() => {
+                this.game.manualAttack();
+            }, GAME_CONFIG.AUTO_ATTACK_INTERVAL);
+            this.game.showNotification('Авто-атака включена', 'success');
         }
     }
 }

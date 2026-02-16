@@ -1,11 +1,11 @@
 // ==============================
-// МЕНЕДЖЕР ИНТЕРФЕЙСА
+// МЕНЕДЖЕР ИНТЕРФЕЙСА (ОБНОВЛЕННЫЙ)
 // ==============================
 
 class UIManager {
-    constructor(game, atlasManager) {
+    constructor(game, imageManager) {
         this.game = game;
-        this.atlasManager = atlasManager;
+        this.imageManager = imageManager;
         this.modals = {};
         this.initModals();
     }
@@ -63,7 +63,7 @@ class UIManager {
         }
     }
     
-    createCollectionUI() {
+    async createCollectionUI() {
         const collectionGrid = document.getElementById('collection-grid');
         if (!collectionGrid) return;
         
@@ -76,7 +76,7 @@ class UIManager {
             return;
         }
         
-        collection.forEach(pokemon => {
+        for (const pokemon of collection) {
             const card = document.createElement('div');
             card.className = 'pokemon-card';
             card.dataset.id = pokemon.id;
@@ -84,23 +84,22 @@ class UIManager {
             const rarity = GAME_CONFIG.RARITIES[pokemon.rarity];
             const energyPercent = (pokemon.energy / pokemon.maxEnergy) * 100;
             
-            // Создаем canvas для покемона
-            const canvas = document.createElement('canvas');
-            canvas.width = 128;
-            canvas.height = 128;
-            canvas.className = 'pokemon-canvas';
+            // Создаем img для покемона
+            const img = document.createElement('img');
+            img.className = 'pokemon-image';
+            img.alt = pokemon.name;
+            img.width = 120;
+            img.height = 120;
             
-            GameUtils.drawPokemon(
-                canvas.getContext('2d'),
-                this.atlasManager,
-                pokemon.id,
-                GAME_CONFIG,
-                0, 0,
-                120, 120
-            );
+            try {
+                const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
+                img.src = pokemonImg.src;
+            } catch (e) {
+                console.error(`❌ Ошибка загрузки изображения для ${pokemon.name}:`, e);
+            }
             
             card.innerHTML = `
-                ${canvas.outerHTML}
+                ${img.outerHTML}
                 <h4>${pokemon.name}</h4>
                 <div class="pokemon-rarity ${pokemon.rarity.toLowerCase()}">
                     ${rarity.name}
@@ -115,10 +114,10 @@ class UIManager {
             `;
             
             collectionGrid.appendChild(card);
-        });
+        }
     }
     
-    createTeamSelectionUI() {
+    async createTeamSelectionUI() {
         const teamSelection = document.getElementById('team-selection');
         if (!teamSelection) return;
         
@@ -140,10 +139,10 @@ class UIManager {
         const teamSlots = document.createElement('div');
         teamSlots.className = 'team-slots';
         
-        team.forEach(pokemon => {
-            const slot = this.createTeamSlot(pokemon, true);
+        for (const pokemon of team) {
+            const slot = await this.createTeamSlot(pokemon, true);
             teamSlots.appendChild(slot);
-        });
+        }
         
         for (let i = team.length; i < this.game.pokemonManager.maxTeamSize; i++) {
             const emptySlot = document.createElement('div');
@@ -168,10 +167,10 @@ class UIManager {
         if (availablePokemon.length === 0) {
             availableGrid.innerHTML = '<p>Нет доступных покемонов (проверьте энергию)</p>';
         } else {
-            availablePokemon.forEach(pokemon => {
-                const pokemonCard = this.createPokemonCard(pokemon);
+            for (const pokemon of availablePokemon) {
+                const pokemonCard = await this.createPokemonCard(pokemon);
                 availableGrid.appendChild(pokemonCard);
-            });
+            }
         }
         
         availableSection.appendChild(availableGrid);
@@ -180,30 +179,31 @@ class UIManager {
         this.addTeamSelectionHandlers();
     }
     
-    createTeamSlot(pokemon, isSelected) {
+    async createTeamSlot(pokemon, isSelected) {
         const slot = document.createElement('div');
         slot.className = `team-slot ${isSelected ? 'selected' : ''}`;
         slot.dataset.id = pokemon.id;
         
-        const canvas = document.createElement('canvas');
-        canvas.width = 64;
-        canvas.height = 64;
+        const img = document.createElement('img');
+        img.className = 'team-pokemon-image';
+        img.alt = pokemon.name;
+        img.width = 64;
+        img.height = 64;
         
-        GameUtils.drawPokemon(
-            canvas.getContext('2d'),
-            this.atlasManager,
-            pokemon.id,
-            GAME_CONFIG,
-            0, 0,
-            64, 64
-        );
+        try {
+            const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
+            img.src = pokemonImg.src;
+        } catch (e) {
+            console.error(`❌ Ошибка загрузки изображения для ${pokemon.name}:`, e);
+        }
         
         slot.innerHTML = `
-            ${canvas.outerHTML}
+            ${img.outerHTML}
             <div class="pokemon-info">
                 <span class="pokemon-name">${pokemon.name}</span>
                 <span class="pokemon-damage">Урон: ${pokemon.currentDamage}</span>
             </div>
+            <div class="energy-bar" style="width: ${(pokemon.energy / pokemon.maxEnergy) * 100}%"></div>
         `;
         
         if (isSelected) {
@@ -221,7 +221,7 @@ class UIManager {
         return slot;
     }
     
-    createPokemonCard(pokemon) {
+    async createPokemonCard(pokemon) {
         const card = document.createElement('div');
         card.className = 'pokemon-card selectable';
         card.dataset.id = pokemon.id;
@@ -229,21 +229,21 @@ class UIManager {
         const rarity = GAME_CONFIG.RARITIES[pokemon.rarity];
         const energyPercent = (pokemon.energy / pokemon.maxEnergy) * 100;
         
-        const canvas = document.createElement('canvas');
-        canvas.width = 100;
-        canvas.height = 100;
+        const img = document.createElement('img');
+        img.className = 'pokemon-image';
+        img.alt = pokemon.name;
+        img.width = 100;
+        img.height = 100;
         
-        GameUtils.drawPokemon(
-            canvas.getContext('2d'),
-            this.atlasManager,
-            pokemon.id,
-            GAME_CONFIG,
-            0, 0,
-            100, 100
-        );
+        try {
+            const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
+            img.src = pokemonImg.src;
+        } catch (e) {
+            console.error(`❌ Ошибка загрузки изображения для ${pokemon.name}:`, e);
+        }
         
         card.innerHTML = `
-            ${canvas.outerHTML}
+            ${img.outerHTML}
             <h4>${pokemon.name}</h4>
             <div class="pokemon-rarity ${pokemon.rarity.toLowerCase()}">
                 ${rarity.name}
@@ -273,36 +273,36 @@ class UIManager {
         });
     }
     
-    updateTeamDisplay() {
+    async updateTeamDisplay() {
         const teamSlots = document.getElementById('team-slots');
         if (!teamSlots) return;
         
         teamSlots.innerHTML = '';
         const team = this.game.pokemonManager.team;
         
-        team.forEach(pokemon => {
+        for (const pokemon of team) {
             const slot = document.createElement('div');
             slot.className = 'team-slot';
             
-            const canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
+            const img = document.createElement('img');
+            img.className = 'team-pokemon-image';
+            img.alt = pokemon.name;
+            img.width = 64;
+            img.height = 64;
             
-            GameUtils.drawPokemon(
-                canvas.getContext('2d'),
-                this.atlasManager,
-                pokemon.id,
-                GAME_CONFIG,
-                0, 0,
-                64, 64
-            );
+            try {
+                const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
+                img.src = pokemonImg.src;
+            } catch (e) {
+                console.error(`❌ Ошибка загрузки изображения для ${pokemon.name}:`, e);
+            }
             
             slot.innerHTML = `
-                ${canvas.outerHTML}
+                ${img.outerHTML}
                 <div class="energy-bar" style="width: ${(pokemon.energy / pokemon.maxEnergy) * 100}%"></div>
             `;
             teamSlots.appendChild(slot);
-        });
+        }
         
         for (let i = team.length; i < this.game.pokemonManager.maxTeamSize; i++) {
             const emptySlot = document.createElement('div');
@@ -312,8 +312,8 @@ class UIManager {
         }
     }
     
-    updateUI() {
-        this.updateTeamDisplay();
+    async updateUI() {
+        await this.updateTeamDisplay();
         this.game.battleSystem.updateUI();
         this.game.shopSystem.updateMoneyDisplay();
         this.game.shopSystem.updatePokeballsDisplay();
