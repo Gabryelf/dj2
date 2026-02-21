@@ -6,7 +6,7 @@
 
 Добро пожаловать в мир Pokemon Clicker Battle — захватывающей инкрементальной игры, где вы становитесь тренером покемонов, сражаетесь с противниками, собираете коллекцию и развиваете свою команду!
 
-![Версия](https://img.shields.io/badge/версия-0.0.2-blue)
+![Версия](https://img.shields.io/badge/версия-0.0.4-blue)
 ![Статус](https://img.shields.io/badge/статус-в%20разработке-yellow)
 ![Лицензия](https://img.shields.io/badge/лицензия-MIT-green)
 
