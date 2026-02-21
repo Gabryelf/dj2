@@ -18,7 +18,7 @@ class TutorialSystem {
             2: { 
                 id: 'step-2', 
                 next: 3,
-                message: 'Для начала получи своего первого покемона!'
+                message: 'Для начала получи своего первого покемона! Кликни на красный покебол вверху.'
             },
             3: { 
                 id: 'step-3', 
@@ -33,16 +33,20 @@ class TutorialSystem {
             5: { 
                 id: 'step-5', 
                 next: null,
-                message: 'Теперь готовься к битве!'
+                message: 'Теперь готовься к битве! Кликай по врагу, чтобы атаковать.'
             }
         };
+        
+        // Проверяем наличие модального окна
+        if (!this.modal) {
+            console.error('❌ Модальное окно туториала не найдено');
+            return;
+        }
         
         this.init();
     }
     
     init() {
-        if (!this.modal) return;
-        
         // Проверяем, проходил ли уже туториал
         const completed = localStorage.getItem('pokemon_tutorial_completed');
         if (completed) {
@@ -72,40 +76,40 @@ class TutorialSystem {
         const currentStep = document.getElementById(`step-${stepNumber}`);
         if (currentStep) {
             currentStep.classList.add('active');
+        } else {
+            console.error(`❌ Шаг ${stepNumber} не найден`);
         }
         
         this.currentStep = stepNumber;
     }
     
     setupEventListeners() {
-        // Удаляем старые обработчики, если они были
-        const oldNextBtn = document.querySelector('.next-btn');
-        const oldFinishBtn = document.querySelector('.finish-btn');
-        
-        if (oldNextBtn) {
-            oldNextBtn.removeEventListener('click', this.nextStepHandler);
-            oldFinishBtn.removeEventListener('click', this.finishHandler);
-        }
+        // Удаляем старые обработчики
+        const nextBtns = document.querySelectorAll('.next-btn');
+        const finishBtns = document.querySelectorAll('.finish-btn');
         
         // Создаем новые обработчики с правильным контекстом
         this.nextStepHandler = (e) => {
             e.preventDefault();
+            e.stopPropagation();
             this.nextStep();
         };
         
         this.finishHandler = (e) => {
             e.preventDefault();
+            e.stopPropagation();
             this.finishTutorial();
         };
         
-        // Назначаем обработчики на все кнопки next и finish
-        const nextBtns = document.querySelectorAll('.next-btn');
+        // Назначаем обработчики на все кнопки next
         nextBtns.forEach(btn => {
+            btn.removeEventListener('click', this.nextStepHandler);
             btn.addEventListener('click', this.nextStepHandler);
         });
         
-        const finishBtns = document.querySelectorAll('.finish-btn');
+        // Назначаем обработчики на все кнопки finish
         finishBtns.forEach(btn => {
+            btn.removeEventListener('click', this.finishHandler);
             btn.addEventListener('click', this.finishHandler);
         });
     }
@@ -118,27 +122,25 @@ class TutorialSystem {
         
         // Выполняем действия в зависимости от шага
         switch(this.currentStep) {
-            case 1: // Начать обучение
-                // Просто переходим к следующему шагу
-                break;
-                
             case 2: // Открыть покебол
-                // Открываем модальное окно с покеболами
-                if (this.game && this.game.uiManager) {
-                    this.game.uiManager.showModal('pokeball');
-                }
+                // Даем инструкцию, но не открываем автоматически
+                this.game.showNotification('Кликни на красный покебол вверху!', 'info');
                 break;
                 
             case 3: // Посмотреть коллекцию
-                if (this.game && this.game.uiManager) {
-                    this.game.uiManager.showModal('collection');
-                }
+                setTimeout(() => {
+                    if (this.game && this.game.uiManager) {
+                        this.game.uiManager.showModal('collection');
+                    }
+                }, 500);
                 break;
                 
             case 4: // Выбрать команду
-                if (this.game && this.game.uiManager) {
-                    this.game.uiManager.showModal('team');
-                }
+                setTimeout(() => {
+                    if (this.game && this.game.uiManager) {
+                        this.game.uiManager.showModal('team');
+                    }
+                }, 500);
                 break;
         }
         
@@ -158,14 +160,8 @@ class TutorialSystem {
         this.isTutorialActive = false;
         localStorage.setItem('pokemon_tutorial_completed', 'true');
         
-        // Разблокируем кнопку атаки
-        const attackButton = document.getElementById('attack-button');
-        if (attackButton) {
-            attackButton.disabled = false;
-        }
-        
         // Добавляем стартового покемона, если его нет
-        if (this.game && this.game.pokemonManager.collection.length === 0) {
+        if (this.game && this.game.pokemonManager && this.game.pokemonManager.collection.length === 0) {
             this.game.addStarterPokemon();
         }
         
@@ -181,4 +177,5 @@ class TutorialSystem {
     }
 }
 
+// Экспортируем в глобальную область
 window.TutorialSystem = TutorialSystem;

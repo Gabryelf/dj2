@@ -7,13 +7,15 @@ class UIManager {
         this.game = game;
         this.imageManager = imageManager;
         this.modals = {};
-        this.activeTab = null;
+        this.activeTab = 'collection';
+        this.isProcessingPokeball = false; // Флаг для предотвращения двойных кликов
         this.initModals();
         this.createMergeModal();
+        this.setupPokeballClickHandlers();
     }
     
     initModals() {
-        const modals = ['pokeball', 'collection', 'shop', 'team'];
+        const modals = ['collection', 'shop', 'team'];
         
         modals.forEach(modalName => {
             const modal = document.getElementById(`${modalName}-modal`);
@@ -43,8 +45,131 @@ class UIManager {
         });
     }
     
+    setupPokeballClickHandlers() {
+        const pokeballItems = document.querySelectorAll('.pokeball-item');
+        pokeballItems.forEach(item => {
+            // Удаляем старые обработчики
+            item.removeEventListener('click', this.pokeballClickHandler);
+            // Создаем новый обработчик с привязкой к контексту
+            this.pokeballClickHandler = (e) => {
+                e.stopPropagation();
+                const type = item.dataset.type;
+                this.handlePokeballClick(type);
+            };
+            // Добавляем новый обработчик
+            item.addEventListener('click', this.pokeballClickHandler);
+        });
+    }
+    
+    handlePokeballClick(type) {
+        // Предотвращаем множественные клики
+        if (this.isProcessingPokeball) {
+            console.log('⏳ Уже обрабатывается открытие покебола');
+            return;
+        }
+        
+        const count = this.game.shopSystem.pokeballs[type];
+        
+        if (count > 0) {
+            this.isProcessingPokeball = true;
+            this.openPokeballWithAnimation(type);
+        } else {
+            this.showModal('shop');
+            this.game.showNotification('Купите покеболы в магазине!', 'warning');
+        }
+    }
+    
+    async openPokeballWithAnimation(type) {
+        try {
+            // Создаем черный оверлей
+            const overlay = document.createElement('div');
+            overlay.className = 'pokeball-open-overlay';
+            document.body.appendChild(overlay);
+            
+            // Создаем анимацию покебола
+            const animContainer = document.createElement('div');
+            animContainer.className = 'pokeball-open-animation';
+            
+            const pokeballImg = await this.imageManager.getPokeballImage(type);
+            const img = document.createElement('img');
+            img.src = pokeballImg.src;
+            animContainer.appendChild(img);
+            overlay.appendChild(animContainer);
+            
+            // Ждем анимацию открытия
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Удаляем анимацию покебола
+            overlay.remove();
+            
+            // Открываем покебол и получаем покемона
+            const pokemon = this.game.shopSystem.openPokeball(type);
+            
+            if (pokemon) {
+                // Показываем полученного покемона на черном фоне
+                await this.showRevealedPokemon(pokemon);
+                
+                // Обновляем UI
+                await this.updateUI();
+                this.game.saveGame();
+                
+                // Воспроизводим звук
+                if (typeof GameSoundGenerator !== 'undefined') {
+                    GameSoundGenerator.playPokemonCry();
+                }
+            }
+            
+            // Сбрасываем флаг
+            this.isProcessingPokeball = false;
+            
+        } catch (e) {
+            console.error('Ошибка анимации покебола:', e);
+            this.isProcessingPokeball = false;
+        }
+    }
+    
+    async showRevealedPokemon(pokemon) {
+        return new Promise(async (resolve) => {
+            // Создаем черный оверлей для показа покемона
+            const overlay = document.createElement('div');
+            overlay.className = 'pokemon-reveal-overlay';
+            
+            const revealContainer = document.createElement('div');
+            revealContainer.className = 'pokemon-reveal-animation';
+            
+            try {
+                const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
+                const img = document.createElement('img');
+                img.src = pokemonImg.src;
+                revealContainer.appendChild(img);
+                
+                // Добавляем имя покемона
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'pokemon-name-reveal';
+                nameDiv.textContent = pokemon.name;
+                revealContainer.appendChild(nameDiv);
+                
+                overlay.appendChild(revealContainer);
+                document.body.appendChild(overlay);
+                
+                // Показываем уведомление
+                this.game.showNotification(`Вы получили ${pokemon.name}!`, 'success');
+                
+                // Удаляем через 2 секунды
+                setTimeout(() => {
+                    overlay.remove();
+                    resolve();
+                }, 2000);
+                
+            } catch (e) {
+                console.error('Ошибка показа покемона:', e);
+                overlay.remove();
+                resolve();
+            }
+        });
+    }
+    
     createMergeModal() {
-        // Создаем модальное окно для слияния, если его нет
         if (document.getElementById('merge-modal')) return;
         
         const modal = document.createElement('div');
@@ -87,7 +212,6 @@ class UIManager {
         
         document.body.appendChild(modal);
         
-        // Добавляем обработчик закрытия
         const closeBtn = modal.querySelector('.close-merge');
         closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
@@ -106,7 +230,6 @@ class UIManager {
         
         const pokemon = mergeData.pokemon;
         
-        // Обновляем содержимое
         const nameEl = modal.querySelector('.merge-name');
         nameEl.textContent = `${pokemon.name} #${pokemon.level}`;
         
@@ -119,15 +242,12 @@ class UIManager {
         const mergeCount = modal.querySelector('.merge-count');
         mergeCount.textContent = mergeData.mergeCount;
         
-        // Загружаем изображения
         this.loadPokemonImage(modal.querySelector('.original'), pokemon.id);
         this.loadPokemonImage(modal.querySelector('.duplicate'), pokemon.id);
         this.loadPokemonImage(modal.querySelector('.result'), pokemon.id);
         
-        // Показываем модальное окно
         modal.style.display = 'flex';
         
-        // Добавляем анимацию
         const elements = modal.querySelectorAll('.merge-pokemon, .merge-plus, .merge-equals');
         elements.forEach((el, i) => {
             el.style.animation = 'none';
@@ -135,7 +255,6 @@ class UIManager {
             el.style.animation = `mergeAppear 0.5s ease forwards ${i * 0.1}s`;
         });
         
-        // Автоматически скрываем через 3 секунды
         setTimeout(() => {
             modal.style.display = 'none';
         }, 3000);
@@ -154,15 +273,10 @@ class UIManager {
     showModal(modalName) {
         const modal = this.modals[modalName];
         if (modal) {
-            modal.style.display = 'block';
-            
-            // Обновляем активную вкладку
+            modal.style.display = 'flex';
             this.setActiveTab(modalName);
             
             switch(modalName) {
-                case 'pokeball':
-                    this.game.shopSystem.createPokeballUI();
-                    break;
                 case 'collection':
                     this.createCollectionUI();
                     break;
@@ -177,7 +291,8 @@ class UIManager {
     }
     
     setActiveTab(tabName) {
-        const tabs = ['pokeball', 'collection', 'shop', 'team'];
+        this.activeTab = tabName;
+        const tabs = ['collection', 'shop', 'team'];
         tabs.forEach(tab => {
             const btn = document.getElementById(`${tab}-menu`);
             if (btn) {
@@ -199,51 +314,55 @@ class UIManager {
         const collection = this.game.pokemonManager.collection;
         
         if (collection.length === 0) {
-            collectionGrid.innerHTML = '<div class="empty-collection"><i class="fas fa-box-open"></i><p>Коллекция пуста! Откройте покеболы в магазине.</p></div>';
+            collectionGrid.innerHTML = '<div class="empty-collection"><i class="fas fa-box-open"></i><p>Коллекция пуста! Откройте покеболы, кликнув на них в шапке.</p></div>';
             return;
         }
         
-        // Сортируем по уровню и имени
         collection.sort((a, b) => b.level - a.level || a.name.localeCompare(b.name));
         
         for (const pokemon of collection) {
-            const card = document.createElement('div');
-            card.className = 'pokemon-card';
-            card.dataset.id = pokemon.id;
-            
-            const rarity = GAME_CONFIG.RARITIES[pokemon.rarity];
-            const energyPercent = (pokemon.energy / pokemon.maxEnergy) * 100;
-            
-            const img = document.createElement('img');
-            img.className = 'pokemon-image';
-            img.alt = pokemon.name;
-            img.width = 100;
-            img.height = 100;
-            
-            try {
-                const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
-                img.src = pokemonImg.src;
-            } catch (e) {
-                console.error(`❌ Ошибка загрузки изображения для ${pokemon.name}:`, e);
-            }
-            
-            card.innerHTML = `
-                ${img.outerHTML}
-                <h4>${pokemon.name}</h4>
-                <div class="pokemon-rarity" style="color: ${rarity.color}; border-color: ${rarity.color}">
-                    ${rarity.name}
-                </div>
-                <div class="pokemon-stats">
-                    <div>Уровень: ${pokemon.level}</div>
-                    <div>Урон: ${Math.floor(pokemon.currentDamage)}</div>
-                    <div>Энергия: ${Math.floor(energyPercent)}%</div>
-                    <div>Слияний: ${pokemon.mergeCount || 0}</div>
-                </div>
-                ${pokemon.isInTeam ? '<div class="in-team">В команде</div>' : ''}
-            `;
-            
+            const card = await this.createPokemonCard(pokemon);
             collectionGrid.appendChild(card);
         }
+    }
+    
+    async createPokemonCard(pokemon) {
+        const card = document.createElement('div');
+        card.className = 'pokemon-card';
+        card.dataset.id = pokemon.id;
+        
+        const rarity = GAME_CONFIG.RARITIES[pokemon.rarity];
+        const energyPercent = (pokemon.energy / pokemon.maxEnergy) * 100;
+        
+        const img = document.createElement('img');
+        img.className = 'pokemon-image';
+        img.alt = pokemon.name;
+        img.width = 100;
+        img.height = 100;
+        
+        try {
+            const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
+            img.src = pokemonImg.src;
+        } catch (e) {
+            console.error(`❌ Ошибка загрузки изображения для ${pokemon.name}:`, e);
+        }
+        
+        card.innerHTML = `
+            ${img.outerHTML}
+            <h4>${pokemon.name}</h4>
+            <div class="pokemon-rarity" style="color: ${rarity.color}; border-color: ${rarity.color}">
+                ${rarity.name}
+            </div>
+            <div class="pokemon-stats">
+                <div>Уровень: ${pokemon.level}</div>
+                <div>Урон: ${Math.floor(pokemon.currentDamage)}</div>
+                <div>Энергия: ${Math.floor(energyPercent)}%</div>
+                <div>Слияний: ${pokemon.mergeCount || 0}</div>
+            </div>
+            ${pokemon.isInTeam ? '<div class="in-team">В команде</div>' : ''}
+        `;
+        
+        return card;
     }
     
     async createTeamSelectionUI() {
@@ -283,6 +402,16 @@ class UIManager {
         teamSection.appendChild(teamSlots);
         teamSelection.appendChild(teamSection);
         
+        // Показываем общий урон команды
+        const totalDamage = this.game.pokemonManager.getTeamDamage();
+        const damageDiv = document.createElement('div');
+        damageDiv.className = 'team-damage';
+        damageDiv.innerHTML = `
+            <span><i class="fas fa-crosshairs"></i> Общий урон команды:</span>
+            <span id="team-total-damage">${Math.floor(totalDamage)}</span>
+        `;
+        teamSelection.appendChild(damageDiv);
+        
         // Доступные покемоны
         const availableSection = document.createElement('div');
         availableSection.className = 'available-pokemon';
@@ -297,7 +426,7 @@ class UIManager {
             availableGrid.innerHTML = '<p class="no-pokemon">Нет доступных покемонов</p>';
         } else {
             for (const pokemon of availablePokemon) {
-                const pokemonCard = await this.createPokemonCard(pokemon);
+                const pokemonCard = await this.createSelectablePokemonCard(pokemon);
                 availableGrid.appendChild(pokemonCard);
             }
         }
@@ -306,6 +435,43 @@ class UIManager {
         teamSelection.appendChild(availableSection);
         
         this.addTeamSelectionHandlers();
+    }
+    
+    async createSelectablePokemonCard(pokemon) {
+        const card = document.createElement('div');
+        card.className = 'pokemon-card selectable';
+        card.dataset.id = pokemon.id;
+        
+        const rarity = GAME_CONFIG.RARITIES[pokemon.rarity];
+        const energyPercent = (pokemon.energy / pokemon.maxEnergy) * 100;
+        
+        const img = document.createElement('img');
+        img.className = 'pokemon-image';
+        img.alt = pokemon.name;
+        img.width = 80;
+        img.height = 80;
+        
+        try {
+            const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
+            img.src = pokemonImg.src;
+        } catch (e) {
+            console.error(`❌ Ошибка загрузки изображения для ${pokemon.name}:`, e);
+        }
+        
+        card.innerHTML = `
+            ${img.outerHTML}
+            <h4>${pokemon.name}</h4>
+            <div class="pokemon-rarity" style="color: ${rarity.color}; border-color: ${rarity.color}">
+                Lv.${pokemon.level} ${rarity.name}
+            </div>
+            <div class="pokemon-stats">
+                <div>Урон: ${Math.floor(pokemon.currentDamage)}</div>
+                <div>Энергия: ${Math.floor(energyPercent)}%</div>
+            </div>
+            <button class="add-to-team-btn">➕ В команду</button>
+        `;
+        
+        return card;
     }
     
     async createTeamSlot(pokemon, isSelected) {
@@ -349,48 +515,10 @@ class UIManager {
             slot.appendChild(removeBtn);
         }
         
-        // Добавляем случайную анимацию
         const delay = Math.random() * 2;
         slot.style.setProperty('--i', delay);
         
         return slot;
-    }
-    
-    async createPokemonCard(pokemon) {
-        const card = document.createElement('div');
-        card.className = 'pokemon-card selectable';
-        card.dataset.id = pokemon.id;
-        
-        const rarity = GAME_CONFIG.RARITIES[pokemon.rarity];
-        const energyPercent = (pokemon.energy / pokemon.maxEnergy) * 100;
-        
-        const img = document.createElement('img');
-        img.className = 'pokemon-image';
-        img.alt = pokemon.name;
-        img.width = 80;
-        img.height = 80;
-        
-        try {
-            const pokemonImg = await this.imageManager.getPokemonImage(pokemon.id);
-            img.src = pokemonImg.src;
-        } catch (e) {
-            console.error(`❌ Ошибка загрузки изображения для ${pokemon.name}:`, e);
-        }
-        
-        card.innerHTML = `
-            ${img.outerHTML}
-            <h4>${pokemon.name}</h4>
-            <div class="pokemon-rarity" style="color: ${rarity.color}; border-color: ${rarity.color}">
-                Lv.${pokemon.level} ${rarity.name}
-            </div>
-            <div class="pokemon-stats">
-                <div>Урон: ${Math.floor(pokemon.currentDamage)}</div>
-                <div>Энергия: ${Math.floor(energyPercent)}%</div>
-            </div>
-            <button class="add-to-team-btn">➕ В команду</button>
-        `;
-        
-        return card;
     }
     
     addTeamSelectionHandlers() {
@@ -437,6 +565,9 @@ class UIManager {
             
             slot.innerHTML = `
                 ${img.outerHTML}
+                <div class="type-icons-mini">
+                    ${this.getTypeIcons(pokemon.types, true)}
+                </div>
                 <div class="energy-bar" style="--energy-width: ${energyPercent}%"></div>
             `;
             teamSlots.appendChild(slot);
@@ -450,36 +581,68 @@ class UIManager {
         }
     }
     
+    getTypeIcons(types, mini = false) {
+        const iconClass = mini ? 'type-icon-mini' : 'type-icon';
+        return types.map(type => {
+            const symbol = this.getTypeSymbol(type);
+            return `<div class="${iconClass}" title="${type}">${symbol}</div>`;
+        }).join('');
+    }
+    
+    getTypeSymbol(type) {
+        const symbols = {
+            NORMAL: '⬤',
+            FIRE: '🔥',
+            WATER: '💧',
+            GRASS: '🌿',
+            ELECTRIC: '⚡',
+            ICE: '❄️',
+            FIGHTING: '👊',
+            POISON: '☠️',
+            GROUND: '⛰️',
+            FLYING: '🦅',
+            PSYCHIC: '🔮',
+            BUG: '🐛',
+            ROCK: '🪨',
+            GHOST: '👻',
+            DRAGON: '🐉'
+        };
+        return symbols[type] || '❓';
+    }
+    
     async updateUI() {
         await this.updateTeamDisplay();
         this.game.battleSystem.updateUI();
         this.game.shopSystem.updateMoneyDisplay();
         this.game.shopSystem.updatePokeballsDisplay();
         
-        // Обновляем уровень игрока (макс уровень в команде)
         const team = this.game.pokemonManager.team;
         if (team.length > 0) {
             const maxLevel = Math.max(...team.map(p => p.level));
             document.getElementById('player-level').textContent = maxLevel;
         }
+        
+        // Обновляем обработчики покеболов после каждого обновления UI
+        this.setupPokeballClickHandlers();
     }
     
     initEventListeners() {
-        const attackButton = document.getElementById('attack-button');
-        if (attackButton) {
-            attackButton.addEventListener('click', () => {
+        // Клик по врагу для атаки
+        const enemyCard = document.querySelector('.enemy-card');
+        if (enemyCard) {
+            enemyCard.addEventListener('click', () => {
                 this.game.manualAttack();
             });
         }
         
-        const actionButtons = {
-            'pokeball-menu': 'pokeball',
+        // Навигационные кнопки
+        const navButtons = {
             'collection-menu': 'collection',
             'shop-menu': 'shop',
             'team-menu': 'team'
         };
         
-        for (const [buttonId, modalName] of Object.entries(actionButtons)) {
+        for (const [buttonId, modalName] of Object.entries(navButtons)) {
             const button = document.getElementById(buttonId);
             if (button) {
                 button.addEventListener('click', () => {
@@ -488,19 +651,20 @@ class UIManager {
             }
         }
         
+        // Горячие клавиши
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !e.repeat) {
                 e.preventDefault();
                 this.game.manualAttack();
-            } else if (e.code === 'KeyP' && e.ctrlKey) {
-                e.preventDefault();
-                this.showModal('pokeball');
             } else if (e.code === 'KeyC' && e.ctrlKey) {
                 e.preventDefault();
                 this.showModal('collection');
             } else if (e.code === 'KeyT' && e.ctrlKey) {
                 e.preventDefault();
                 this.showModal('team');
+            } else if (e.code === 'KeyS' && e.ctrlKey) {
+                e.preventDefault();
+                this.showModal('shop');
             }
         });
     }
@@ -526,7 +690,7 @@ mergeStyles.textContent = `
         height: 80px;
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.1);
-        border: 2px solid var(--accent-purple);
+        border: 2px solid var(--accent-primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -552,7 +716,7 @@ mergeStyles.textContent = `
     .merge-name {
         font-size: 1.5rem;
         margin-bottom: 20px;
-        color: var(--accent-gold);
+        color: var(--accent-warning);
     }
     
     .merge-stats {
@@ -573,7 +737,7 @@ mergeStyles.textContent = `
     }
     
     .stat .increase {
-        color: var(--success);
+        color: var(--accent-success);
         font-weight: bold;
     }
     

@@ -52,14 +52,14 @@ class ImageCache {
         const ctx = canvas.getContext('2d');
         
         // Рисуем заглушку
-        ctx.fillStyle = '#cccccc';
+        ctx.fillStyle = '#6C5CE7';
         ctx.fillRect(0, 0, 128, 128);
-        ctx.strokeStyle = '#999999';
+        ctx.strokeStyle = '#A0A8C0';
         ctx.lineWidth = 2;
         ctx.strokeRect(0, 0, 128, 128);
         
-        ctx.fillStyle = '#666666';
-        ctx.font = 'bold 48px Arial';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 48px Inter, Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('?', 64, 64);
@@ -119,17 +119,17 @@ class ImageManager {
         
         // Загружаем всех покемонов
         for (const [id, url] of Object.entries(this.config.POKEMON_IMAGES)) {
-            promises.push(this.cache.loadImage(url, `pokemon_${id}`));
+            promises.push(this.cache.loadImage(url, `pokemon_${id}`).catch(() => {}));
         }
         
         // Загружаем противников
         for (const [key, url] of Object.entries(this.config.ENEMY_IMAGES)) {
-            promises.push(this.cache.loadImage(url, `enemy_${key}`));
+            promises.push(this.cache.loadImage(url, `enemy_${key}`).catch(() => {}));
         }
         
         // Загружаем покеболы
         for (const [type, url] of Object.entries(this.config.POKEBALL_IMAGES)) {
-            promises.push(this.cache.loadImage(url, `pokeball_${type}`));
+            promises.push(this.cache.loadImage(url, `pokeball_${type}`).catch(() => {}));
         }
         
         await Promise.all(promises);
@@ -238,6 +238,7 @@ async function updatePokeballImages(imageManager) {
     }
 }
 
+// Экспортируем в глобальную область
 window.ImageManager = ImageManager;
 window.ImageCache = ImageCache;
 window.drawPokemon = drawPokemon;

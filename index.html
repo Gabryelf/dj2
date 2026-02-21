@@ -2,179 +2,106 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokemon Clicker Battle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Покемон Кликер</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <!--<link rel="stylesheet" href="components.css">-->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Туториал -->
-    <div id="tutorial" class="tutorial-overlay">
-        <div class="tutorial-content">
-            <h2><i class="fas fa-graduation-cap"></i> Добро пожаловать в Pokemon Clicker!</h2>
-            <div class="tutorial-step active" id="step-1">
-                <p>Привет, тренер! Сейчас я покажу тебе, как играть.</p>
-                <p>В этой игре ты будешь собирать покемонов и сражаться с противниками.</p>
-                <button class="tutorial-btn next-btn">Начать обучение</button>
-            </div>
-            <div class="tutorial-step" id="step-2">
-                <p>Для начала получи своего первого покемона!</p>
-                <p>Открой покебол, чтобы получить случайного покемона.</p>
-                <button class="tutorial-btn next-btn">Открыть покебол</button>
-            </div>
-            <div class="tutorial-step" id="step-3">
-                <p>Отличная работа! Теперь посмотри свою коллекцию.</p>
-                <p>Здесь ты можешь увидеть всех своих покемонов.</p>
-                <button class="tutorial-btn next-btn">Посмотреть коллекцию</button>
-            </div>
-            <div class="tutorial-step" id="step-4">
-                <p>Выбери покемона для битвы!</p>
-                <p>Ты можешь добавить до 3 покемонов в команду.</p>
-                <button class="tutorial-btn next-btn">Выбрать команду</button>
-            </div>
-            <div class="tutorial-step" id="step-5">
-                <p>Теперь готовься к битве!</p>
-                <p>Нажимай на кнопку атаки или пробел, чтобы атаковать противника.</p>
-                <button class="tutorial-btn finish-btn">Начать игру!</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Основной контейнер -->
     <div class="container">
         <header>
             <div class="stats-bar">
                 <div class="money-display">
                     <i class="fas fa-coins"></i>
-                    <span id="money">100</span>
+                    <span><span id="money">100</span> ₽</span>
                 </div>
                 <div class="level-display">
-                    <i class="fas fa-trophy"></i>
-                    <span>Уровень: </span>
-                    <span id="player-level">1</span>
+                    <i class="fas fa-star"></i>
+                    <span>Ур. <span id="player-level">1</span></span>
                 </div>
             </div>
-
+            
+            <div class="nav-buttons">
+                <button class="nav-btn" id="collection-menu">
+                    <i class="fas fa-dragon"></i>
+                    <span>Коллекция</span>
+                </button>
+                <button class="nav-btn" id="team-menu">
+                    <i class="fas fa-users"></i>
+                    <span>Команда</span>
+                </button>
+                <button class="nav-btn" id="shop-menu">
+                    <i class="fas fa-store"></i>
+                    <span>Магазин</span>
+                </button>
+            </div>
+            
             <div class="pokeballs-display">
                 <div class="pokeball-item" data-type="NORMAL">
-                    <img src="" alt="Покебол" id="pokeball-normal-img">
+                    <img src="" alt="Покебол" id="normal-ball-img">
                     <span id="normal-count">5</span>
                 </div>
                 <div class="pokeball-item" data-type="MASTER">
-                    <img src="" alt="Мастербол" id="pokeball-master-img">
+                    <img src="" alt="Мастербол" id="master-ball-img">
                     <span id="master-count">0</span>
                 </div>
                 <div class="pokeball-item" data-type="MYTHIC">
-                    <img src="" alt="Мификбол" id="pokeball-mythic-img">
+                    <img src="" alt="Мификбол" id="mythic-ball-img">
                     <span id="mythic-count">0</span>
                 </div>
             </div>
         </header>
 
         <main>
-            <!-- Противник -->
             <div class="battle-area">
-                <div class="enemy-card">
+                <!-- КАРТОЧКА ВРАГА - теперь кликабельная и занимает больше места -->
+                <div class="enemy-card" id="enemy-card">
                     <div class="enemy-header">
-                        <span class="enemy-name" id="enemy-name">Раттата</span>
-                        <span class="enemy-level">Ур. <span id="enemy-level">1</span></span>
+                        <h2 class="enemy-name" id="enemy-name">Загрузка...</h2>
+                        <span class="enemy-level" id="enemy-level">1</span>
                     </div>
                     
                     <div class="enemy-hp">
                         <div class="hp-bar">
-                            <div id="enemy-hp-bar" class="hp-fill"></div>
+                            <div class="hp-fill" id="enemy-hp-bar" style="width: 100%"></div>
                         </div>
-                        <span class="hp-text" id="enemy-hp-text">100/100</span>
+                        <div class="hp-text" id="enemy-hp-text">100/100</div>
                     </div>
                     
-                    <div class="enemy-image-container">
+                    <div class="enemy-image-container" id="enemy-image-container">
                         <div class="rarity-badge" id="enemy-rarity">Обычный</div>
-                        <div id="enemy-image-container"></div>
+                        <div class="type-icons" id="enemy-type-icons"></div>
+                        <div class="rarity-icon" id="enemy-rarity-icon"></div>
+                        <img src="" alt="Противник" class="enemy-image" id="enemy-image">
                     </div>
                 </div>
 
-                <!-- Команда игрока -->
+                <!-- КОМАНДА ИГРОКА - внизу -->
                 <div class="player-team">
-                    <h3><i class="fas fa-users"></i> Твоя команда 
-                        <div class="team-stats">
-                        <div class="total-damage">
-                            <i class="fas fa-bolt"></i>
-                            <span>Общий урон: </span>
-                            <span id="total-damage">0</span>
-                        </div>
-                    </div></h3>
-                    
+                    <h3>
+                        <!--<i class="fas fa-users"></i>
+                        Твоя команда
+                        <span class="total-damage">
+                            <i class="fas fa-crosshairs"></i>
+                            Урон: <span id="total-damage">0</span>
+                        </span>-->
+                    </h3>
                     <div class="team-slots" id="team-slots">
-                        <div class="team-slot empty">
-                            <i class="fas fa-plus"></i>
-                            <span>Добавить</span>
-                        </div>
-                        <div class="team-slot empty">
-                            <i class="fas fa-plus"></i>
-                            <span>Добавить</span>
-                        </div>
-                        <div class="team-slot empty">
-                            <i class="fas fa-plus"></i>
-                            <span>Добавить</span>
-                        </div>
+                        <!-- Динамически заполняется -->
                     </div>
-                    
-                </div>
-            </div>
-
-            <!-- Панель управления -->
-            <div class="control-panel">
-                <button id="attack-button" class="attack-btn pulse">
-                    <i class="fas fa-fist-raised"></i>
-                    <span>АТАКОВАТЬ!</span>
-                    <small>Пробел</small>
-                </button>
-
-                <div class="action-buttons">
-                    <button id="pokeball-menu" class="action-btn">
-                        <i class="fas fa-baseball-ball"></i>
-                        <span>Покеболы</span>
-                    </button>
-                    <button id="collection-menu" class="action-btn">
-                        <i class="fas fa-book"></i>
-                        <span>Коллекция</span>
-                    </button>
-                    <button id="shop-menu" class="action-btn">
-                        <i class="fas fa-store"></i>
-                        <span>Магазин</span>
-                    </button>
-                    <button id="team-menu" class="action-btn">
-                        <i class="fas fa-user-friends"></i>
-                        <span>Команда</span>
-                    </button>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Модальные окна -->
-    <div id="pokeball-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-baseball-ball"></i> Открыть покеболы</h2>
-                <span class="close">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="pokeball-options" id="pokeball-options"></div>
-            </div>
-        </div>
-    </div>
-
+    <!-- МОДАЛЬНЫЕ ОКНА -->
     <div id="collection-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-book"></i> Коллекция покемонов</h2>
+                <h2><i class="fas fa-dragon"></i> Коллекция покемонов</h2>
                 <span class="close">&times;</span>
             </div>
-            <div class="modal-body">
-                <div class="collection-grid" id="collection-grid"></div>
-            </div>
+            <div class="modal-body" id="collection-grid"></div>
         </div>
     </div>
 
@@ -184,39 +111,60 @@
                 <h2><i class="fas fa-store"></i> Магазин</h2>
                 <span class="close">&times;</span>
             </div>
-            <div class="modal-body">
-                <div class="shop-items" id="shop-items"></div>
-            </div>
+            <div class="modal-body" id="shop-items"></div>
         </div>
     </div>
 
     <div id="team-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-user-friends"></i> Настройка команды</h2>
+                <h2><i class="fas fa-users"></i> Управление командой</h2>
                 <span class="close">&times;</span>
             </div>
-            <div class="modal-body">
-                <div class="team-selection" id="team-selection"></div>
+            <div class="modal-body" id="team-selection"></div>
+        </div>
+    </div>
+
+    <div id="tutorial" class="tutorial-overlay">
+        <div class="tutorial-content">
+            <h2><i class="fas fa-graduation-cap"></i> Обучение</h2>
+            <div class="tutorial-step" id="step-1">
+                <p>Привет, тренер! Сейчас я покажу тебе, как играть.</p>
+                <button class="tutorial-btn next-btn">Далее</button>
+            </div>
+            <div class="tutorial-step" id="step-2">
+                <p>Для начала получи своего первого покемона! Кликни на красный покебол вверху.</p>
+                <button class="tutorial-btn next-btn">Далее</button>
+            </div>
+            <div class="tutorial-step" id="step-3">
+                <p>Отличная работа! Теперь посмотри свою коллекцию.</p>
+                <button class="tutorial-btn next-btn">Далее</button>
+            </div>
+            <div class="tutorial-step" id="step-4">
+                <p>Выбери покемона для битвы!</p>
+                <button class="tutorial-btn next-btn">Далее</button>
+            </div>
+            <div class="tutorial-step" id="step-5">
+                <p>Теперь готовься к битве! Кликай по врагу, чтобы атаковать.</p>
+                <button class="tutorial-btn finish-btn">Завершить обучение</button>
             </div>
         </div>
     </div>
 
-    <!-- Уведомления -->
     <div id="notification-container"></div>
 
-    <!-- Загрузка скриптов -->
+    <!-- ВАЖНО: правильный порядок загрузки скриптов -->
     <script src="config.js"></script>
     <script src="image-config.js"></script>
     <script src="image-loader.js"></script>
     <script src="save-manager.js"></script>
     <script src="pokemon-manager.js"></script>
-    <script src="battle-system.js"></script>
     <script src="shop-system.js"></script>
-    <script src="animations.js"></script>
     <script src="sound-generator.js"></script>
-    <script src="ui-manager.js"></script>
+    <script src="animations.js"></script>
+    <script src="battle-system.js"></script>
     <script src="tutorial.js"></script>
+    <script src="ui-manager.js"></script>
     <script src="game.js"></script>
-    </body>
+</body>
 </html>

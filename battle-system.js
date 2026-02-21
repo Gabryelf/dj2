@@ -1,5 +1,5 @@
 // ==============================
-// СИСТЕМА БОЯ С АНИМАЦИЯМИ
+// СИСТЕМА БОЯ С АНИМАЦИЯМИ И АВТО-АТАКОЙ
 // ==============================
 
 class BattleSystem {
@@ -11,9 +11,13 @@ class BattleSystem {
         this.enemyLevel = 1;
         this.autoAttackInterval = null;
         this.enemyAnimationFrame = null;
+        this.isInitialized = false;
         
+        // Создаем врага только один раз
         this.createNewEnemy();
         this.startEnemyAnimation();
+        this.startAutoAttack();
+        this.isInitialized = true;
     }
     
     createNewEnemy() {
@@ -34,17 +38,19 @@ class BattleSystem {
             imageKey: randomEnemy.imageKey
         };
         
-        this.updateUI();
+        // Обновляем UI только если игра инициализирована
+        if (this.isInitialized) {
+            this.updateUI();
+        }
     }
     
     startEnemyAnimation() {
-        // Случайные анимации для врага
         const animate = () => {
             if (this.currentEnemy) {
                 const enemyImage = document.querySelector('.enemy-image');
-                if (enemyImage && Math.random() < 0.1) { // 10% шанс анимации
+                if (enemyImage && Math.random() < 0.1) {
                     enemyImage.style.animation = 'none';
-                    enemyImage.offsetHeight; // trigger reflow
+                    enemyImage.offsetHeight;
                     enemyImage.style.animation = 'enemyFloat 3s ease-in-out infinite';
                 }
             }
@@ -53,23 +59,78 @@ class BattleSystem {
         this.enemyAnimationFrame = requestAnimationFrame(animate);
     }
     
+    startAutoAttack() {
+        if (this.autoAttackInterval) {
+            clearInterval(this.autoAttackInterval);
+        }
+        
+        this.autoAttackInterval = setInterval(() => {
+            // Авто-атака срабатывает только если команда полностью заполнена (3 покемона)
+            if (this.pokemonManager && this.pokemonManager.team.length === this.pokemonManager.maxTeamSize) {
+                this.performAutoAttack();
+            }
+        }, GAME_CONFIG.AUTO_ATTACK_INTERVAL || 3000);
+    }
+    
+    performAutoAttack() {
+        if (!this.currentEnemy || !this.pokemonManager || this.pokemonManager.team.length === 0) return;
+        
+        const totalDamage = this.pokemonManager.getTeamDamage();
+        
+        // Применяем урон
+        this.currentEnemy.hp = Math.max(0, this.currentEnemy.hp - totalDamage);
+        
+        // Показываем урон
+        const enemyCard = document.querySelector('.enemy-card');
+        if (enemyCard) {
+            const rect = enemyCard.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            
+            if (this.game && this.game.animationManager) {
+                this.game.animationManager.createDamageEffect(
+                    Math.floor(totalDamage),
+                    x,
+                    y,
+                    totalDamage > 50
+                );
+            }
+        }
+        
+        // Анимация получения урона
+        if (enemyCard) {
+            enemyCard.classList.add('enemy-damage-effect');
+            setTimeout(() => {
+                enemyCard.classList.remove('enemy-damage-effect');
+            }, 300);
+        }
+        
+        // Проверка на победу
+        if (this.currentEnemy.hp <= 0) {
+            this.handleVictory();
+        }
+        
+        this.updateUI();
+    }
+    
     attackEnemy() {
         if (!this.currentEnemy) return { damage: 0 };
         
         const totalDamage = this.pokemonManager.useEnergy();
         
         if (totalDamage <= 0) {
+            if (this.game) {
+                this.game.showNotification('У покемонов нет энергии!', 'warning');
+            }
             return { damage: 0 };
         }
         
         // Анимация получения урона
         const enemyCard = document.querySelector('.enemy-card');
         if (enemyCard) {
-            enemyCard.style.animation = 'none';
-            enemyCard.offsetHeight;
-            enemyCard.style.animation = 'enemyDamage 0.3s ease-out';
+            enemyCard.classList.add('enemy-damage-effect');
             setTimeout(() => {
-                enemyCard.style.animation = '';
+                enemyCard.classList.remove('enemy-damage-effect');
             }, 300);
         }
         
@@ -81,17 +142,23 @@ class BattleSystem {
         };
         
         if (this.currentEnemy.hp <= 0) {
-            const reward = Math.floor(this.enemyLevel * GAME_CONFIG.REWARD_MULTIPLIER);
-            
-            result.defeated = true;
-            result.reward = reward;
-            result.enemy = { ...this.currentEnemy };
-            
-            this.enemyLevel++;
-            this.createNewEnemy();
+            result = this.handleVictory(result);
         }
         
         this.updateUI();
+        return result;
+    }
+    
+    handleVictory(result = {}) {
+        const reward = Math.floor(this.enemyLevel * GAME_CONFIG.REWARD_MULTIPLIER);
+        
+        result.defeated = true;
+        result.reward = reward;
+        result.enemy = { ...this.currentEnemy };
+        
+        this.enemyLevel++;
+        this.createNewEnemy();
+        
         return result;
     }
     
@@ -103,15 +170,29 @@ class BattleSystem {
         const enemyHpBar = document.getElementById('enemy-hp-bar');
         const enemyHpText = document.getElementById('enemy-hp-text');
         const enemyRarity = document.getElementById('enemy-rarity');
-        const enemyContainer = document.getElementById('enemy-image-container');
+        const enemyTypeIcons = document.getElementById('enemy-type-icons');
+        const enemyRarityIcon = document.getElementById('enemy-rarity-icon');
+        const enemyImage = document.getElementById('enemy-image');
         
         if (enemyName) enemyName.textContent = this.currentEnemy.name;
         if (enemyLevel) enemyLevel.textContent = this.currentEnemy.level;
+        
         if (enemyRarity) {
             const rarity = GAME_CONFIG.RARITIES[this.currentEnemy.rarity];
             enemyRarity.textContent = rarity.name;
             enemyRarity.style.color = rarity.color;
             enemyRarity.style.borderColor = rarity.color;
+        }
+        
+        if (enemyRarityIcon) {
+            const rarity = GAME_CONFIG.RARITIES[this.currentEnemy.rarity];
+            enemyRarityIcon.style.borderColor = rarity.color;
+            enemyRarityIcon.style.color = rarity.color;
+            enemyRarityIcon.textContent = this.getRarityIcon(this.currentEnemy.rarity);
+        }
+        
+        if (enemyTypeIcons) {
+            enemyTypeIcons.innerHTML = this.getTypeIcons(this.currentEnemy.types);
         }
         
         if (enemyHpBar) {
@@ -120,49 +201,57 @@ class BattleSystem {
         }
         
         if (enemyHpText) {
-            // Отображаем только целые числа
             enemyHpText.textContent = `${Math.floor(this.currentEnemy.hp)}/${this.currentEnemy.maxHp}`;
         }
         
-        if (enemyContainer) {
-            // Очищаем контейнер, но оставляем rarity-badge
-            const badge = enemyContainer.querySelector('.rarity-badge');
-            enemyContainer.innerHTML = '';
-            if (badge) enemyContainer.appendChild(badge);
-            
-            const img = document.createElement('img');
-            img.className = 'enemy-image';
-            img.alt = this.currentEnemy.name;
-            img.width = 200;
-            img.height = 200;
-            
+        if (enemyImage && this.imageManager) {
             try {
                 const enemyImg = await this.imageManager.getEnemyImage(this.currentEnemy.imageKey);
-                img.src = enemyImg.src;
+                enemyImage.src = enemyImg.src;
             } catch (e) {
                 console.error(`❌ Ошибка загрузки изображения противника:`, e);
             }
-            
-            enemyContainer.appendChild(img);
-        }
-        
-        const totalDamage = document.getElementById('total-damage');
-        if (totalDamage) {
-            totalDamage.textContent = Math.floor(this.pokemonManager.getTeamDamage());
         }
     }
     
-    toggleAutoAttack() {
-        if (this.autoAttackInterval) {
-            clearInterval(this.autoAttackInterval);
-            this.autoAttackInterval = null;
-            this.game.showNotification('Авто-атака отключена', 'info');
-        } else {
-            this.autoAttackInterval = setInterval(() => {
-                this.game.manualAttack();
-            }, GAME_CONFIG.AUTO_ATTACK_INTERVAL);
-            this.game.showNotification('Авто-атака включена', 'success');
-        }
+    getTypeIcons(types) {
+        return types.map(type => {
+            const symbol = this.getTypeSymbol(type);
+            return `<div class="type-icon" title="${type}">${symbol}</div>`;
+        }).join('');
+    }
+    
+    getTypeSymbol(type) {
+        const symbols = {
+            NORMAL: '⬤',
+            FIRE: '🔥',
+            WATER: '💧',
+            GRASS: '🌿',
+            ELECTRIC: '⚡',
+            ICE: '❄️',
+            FIGHTING: '👊',
+            POISON: '☠️',
+            GROUND: '⛰️',
+            FLYING: '🦅',
+            PSYCHIC: '🔮',
+            BUG: '🐛',
+            ROCK: '🪨',
+            GHOST: '👻',
+            DRAGON: '🐉'
+        };
+        return symbols[type] || '❓';
+    }
+    
+    getRarityIcon(rarity) {
+        const icons = {
+            COMMON: '⬤',
+            UNCOMMON: '🔹',
+            RARE: '🔷',
+            EPIC: '💜',
+            SPECIAL: '✨',
+            LEGENDARY: '⭐'
+        };
+        return icons[rarity] || '⬤';
     }
     
     cleanup() {
@@ -176,14 +265,26 @@ class BattleSystem {
 }
 
 // Добавляем CSS анимацию для урона
-const style = document.createElement('style');
-style.textContent = `
+const battleStyles = document.createElement('style');
+battleStyles.textContent = `
     @keyframes enemyDamage {
         0% { filter: brightness(1); }
         30% { filter: brightness(1.5) drop-shadow(0 0 20px #ef4444); }
         100% { filter: brightness(1); }
     }
+    
+    .enemy-damage-effect {
+        animation: enemyDamage 0.3s ease-out;
+    }
+    
+    .enemy-card {
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .enemy-card:active {
+        transform: scale(0.98);
+    }
 `;
-document.head.appendChild(style);
+document.head.appendChild(battleStyles);
 
 window.BattleSystem = BattleSystem;

@@ -5,12 +5,12 @@
 class PokemonClickerGame {
     constructor() {
         // Системы
-        this.saveManager = new SaveManager();
+        this.saveManager = null;
         this.pokemonManager = null;
         this.shopSystem = null;
         this.battleSystem = null;
         this.uiManager = null;
-        this.animationManager = new AnimationManager();
+        this.animationManager = null;
         this.tutorialSystem = null;
         
         // Менеджер изображений
@@ -23,12 +23,49 @@ class PokemonClickerGame {
         // Таймеры
         this.energyRestoreInterval = null;
         this.autoSaveInterval = null;
+        
+        // Очередь уведомлений
+        this.notificationQueue = [];
+        this.isShowingNotification = false;
     }
     
     async init() {
         console.log('🚀 Инициализация Pokemon Clicker Game...');
         
         try {
+            // Проверяем наличие всех необходимых классов
+            if (typeof ImageManager === 'undefined') {
+                throw new Error('ImageManager не определен');
+            }
+            
+            if (typeof SaveManager === 'undefined') {
+                throw new Error('SaveManager не определен');
+            }
+            
+            if (typeof PokemonManager === 'undefined') {
+                throw new Error('PokemonManager не определен');
+            }
+            
+            if (typeof ShopSystem === 'undefined') {
+                throw new Error('ShopSystem не определен');
+            }
+            
+            if (typeof BattleSystem === 'undefined') {
+                throw new Error('BattleSystem не определен');
+            }
+            
+            if (typeof AnimationManager === 'undefined') {
+                throw new Error('AnimationManager не определен');
+            }
+            
+            if (typeof TutorialSystem === 'undefined') {
+                throw new Error('TutorialSystem не определен');
+            }
+            
+            if (typeof UIManager === 'undefined') {
+                throw new Error('UIManager не определен');
+            }
+            
             // 1. Инициализируем менеджер изображений
             this.imageManager = new ImageManager(IMAGE_CONFIG);
             
@@ -37,6 +74,7 @@ class PokemonClickerGame {
             console.log('✅ Все изображения загружены!');
             
             // 3. Загружаем сохранение
+            this.saveManager = new SaveManager();
             this.loadGame();
             
             // 4. Инициализируем системы
@@ -44,6 +82,7 @@ class PokemonClickerGame {
             this.shopSystem = new ShopSystem(this.pokemonManager, this, this.imageManager);
             this.battleSystem = new BattleSystem(this.pokemonManager, this, this.imageManager);
             this.uiManager = new UIManager(this, this.imageManager);
+            this.animationManager = new AnimationManager();
             
             // 5. Подписываемся на события слияния
             this.pokemonManager.onMerge((mergeData) => {
@@ -73,13 +112,7 @@ class PokemonClickerGame {
             this.startEnergyRestore();
             this.startAutoSave();
             
-            // 11. Блокируем кнопку атаки до завершения туториала
-            const attackButton = document.getElementById('attack-button');
-            if (attackButton) {
-                attackButton.disabled = true;
-            }
-            
-            // 12. Инициализируем звуки
+            // 11. Инициализируем звуки
             if (typeof GameSoundGenerator !== 'undefined') {
                 GameSoundGenerator.init();
                 document.addEventListener('click', function activateSound() {
@@ -88,18 +121,42 @@ class PokemonClickerGame {
                 }, { once: true });
             }
             
-            // 13. Обновляем изображения покеболов
+            // 12. Обновляем изображения покеболов
             await updatePokeballImages(this.imageManager);
+            
+            // 13. Устанавливаем активную вкладку по умолчанию
+            if (this.uiManager.setActiveTab) {
+                this.uiManager.setActiveTab('collection');
+            }
             
             this.isInitialized = true;
             console.log('✅ Игра успешно инициализирована!');
             
         } catch (error) {
             console.error('❌ Ошибка инициализации игры:', error);
+            // Показываем сообщение об ошибке пользователю
+            this.showErrorMessage(error.message);
+        }
+    }
+    
+    showErrorMessage(message) {
+        const container = document.getElementById('notification-container');
+        if (container) {
+            const notification = document.createElement('div');
+            notification.className = 'notification error';
+            notification.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                <div class="notification-content">
+                    <p>Ошибка: ${message}</p>
+                </div>
+            `;
+            container.appendChild(notification);
         }
     }
     
     loadGame() {
+        if (!this.saveManager) return;
+        
         this.gameState = this.saveManager.load();
         
         // Восстанавливаем состояние
@@ -141,15 +198,17 @@ class PokemonClickerGame {
             if (result.success) {
                 console.log('🎁 Добавлен стартовый покемон:', pokemon.name);
                 
-                const attackButton = document.getElementById('attack-button');
-                if (attackButton) {
-                    attackButton.disabled = false;
+                // Показываем анимацию получения
+                if (this.uiManager && this.uiManager.showRevealedPokemon) {
+                    this.uiManager.showRevealedPokemon(pokemon);
                 }
             }
         }
     }
     
     saveGame() {
+        if (!this.gameState || !this.shopSystem || !this.pokemonManager || !this.battleSystem) return;
+        
         this.gameState.money = this.shopSystem.money;
         this.gameState.pokeballs = { ...this.shopSystem.pokeballs };
         this.gameState.collection = [...this.pokemonManager.collection];
@@ -183,11 +242,11 @@ class PokemonClickerGame {
         const result = this.battleSystem.attackEnemy();
         
         if (result.damage > 0) {
-            const button = document.getElementById('attack-button');
-            if (button) {
-                const rect = button.getBoundingClientRect();
+            const enemyCard = document.querySelector('.enemy-card');
+            if (enemyCard) {
+                const rect = enemyCard.getBoundingClientRect();
                 const x = rect.left + rect.width / 2;
-                const y = rect.top;
+                const y = rect.top + rect.height / 2;
                 
                 this.animationManager.createDamageEffect(
                     Math.floor(result.damage), 
@@ -226,16 +285,13 @@ class PokemonClickerGame {
         const result = this.pokemonManager.addToTeam(pokemonId);
         
         if (result.success) {
-            if (this.pokemonManager.team.length === 1) {
-                const attackButton = document.getElementById('attack-button');
-                if (attackButton) {
-                    attackButton.disabled = false;
-                }
-            }
-            
             this.uiManager.updateUI();
             this.saveGame();
             this.showNotification(`${result.pokemon.name} добавлен в команду!`, 'success');
+            
+            if (typeof GameSoundGenerator !== 'undefined') {
+                GameSoundGenerator.playAddToTeam();
+            }
         } else {
             this.showNotification(result.message, 'error');
         }
@@ -253,43 +309,61 @@ class PokemonClickerGame {
             if (pokemon) {
                 this.showNotification(`${pokemon.name} удален из команды`, 'info');
             }
-            
-            if (this.pokemonManager.team.length === 0) {
-                const attackButton = document.getElementById('attack-button');
-                if (attackButton) {
-                    attackButton.disabled = true;
-                }
-            }
         }
         
         return removed;
     }
     
     showNotification(message, type = 'info') {
+        // Добавляем в очередь
+        this.notificationQueue.push({ message, type });
+        
+        // Если не показываем уведомление сейчас, показываем
+        if (!this.isShowingNotification) {
+            this.showNextNotification();
+        }
+    }
+    
+    showNextNotification() {
+        if (this.notificationQueue.length === 0) {
+            this.isShowingNotification = false;
+            return;
+        }
+        
+        this.isShowingNotification = true;
+        const { message, type } = this.notificationQueue.shift();
+        
+        const container = document.getElementById('notification-container');
+        if (!container) return;
+        
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
+        
+        let icon = 'info-circle';
+        if (type === 'success') icon = 'check-circle';
+        if (type === 'error') icon = 'exclamation-circle';
+        if (type === 'warning') icon = 'exclamation-triangle';
+        
         notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 
-                              type === 'error' ? 'exclamation-circle' : 
-                              type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+            <i class="fas fa-${icon}"></i>
             <div class="notification-content">
                 <p>${message}</p>
             </div>
         `;
         
-        const container = document.getElementById('notification-container');
-        if (container) {
-            container.appendChild(notification);
-            
+        container.appendChild(notification);
+        
+        // Удаляем через 3 секунды с анимацией
+        setTimeout(() => {
+            notification.classList.add('hiding');
             setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.3s ease';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 300);
-            }, 5000);
-        }
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+                // Показываем следующее уведомление
+                this.showNextNotification();
+            }, 500);
+        }, 3000);
     }
     
     startEnergyRestore() {
@@ -298,9 +372,11 @@ class PokemonClickerGame {
         }
         
         this.energyRestoreInterval = setInterval(() => {
-            this.pokemonManager.restoreEnergy();
-            if (this.pokemonManager.collection.some(p => !p.isInTeam && p.energy < p.maxEnergy)) {
-                this.uiManager.updateUI();
+            if (this.pokemonManager) {
+                this.pokemonManager.restoreEnergy();
+                if (this.uiManager) {
+                    this.uiManager.updateUI();
+                }
             }
         }, 1000);
     }
@@ -313,7 +389,7 @@ class PokemonClickerGame {
         this.autoSaveInterval = setInterval(() => {
             this.saveGame();
             console.log('💾 Автосохранение выполнено');
-        }, GAME_CONFIG.AUTO_SAVE_INTERVAL);
+        }, GAME_CONFIG.AUTO_SAVE_INTERVAL || 30000);
     }
     
     cleanup() {
