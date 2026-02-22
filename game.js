@@ -1,5 +1,5 @@
 // ==============================
-// ГЛАВНЫЙ КЛАСС ИГРЫ С ПОДДЕРЖКОЙ СЛИЯНИЯ
+// ОБНОВЛЕННЫЙ ГЛАВНЫЙ КЛАСС ИГРЫ
 // ==============================
 
 class PokemonClickerGame {
@@ -12,6 +12,9 @@ class PokemonClickerGame {
         this.uiManager = null;
         this.animationManager = null;
         this.tutorialSystem = null;
+        this.locationSystem = null;
+        this.mapModal = null;
+        this.questsPanel = null;
         
         // Менеджер изображений
         this.imageManager = null;
@@ -66,6 +69,18 @@ class PokemonClickerGame {
                 throw new Error('UIManager не определен');
             }
             
+            if (typeof LocationSystem === 'undefined') {
+                throw new Error('LocationSystem не определен');
+            }
+            
+            if (typeof MapModal === 'undefined') {
+                throw new Error('MapModal не определен');
+            }
+            
+            if (typeof QuestsPanel === 'undefined') {
+                throw new Error('QuestsPanel не определен');
+            }
+            
             // 1. Инициализируем менеджер изображений
             this.imageManager = new ImageManager(IMAGE_CONFIG);
             
@@ -81,8 +96,11 @@ class PokemonClickerGame {
             this.pokemonManager = new PokemonManager();
             this.shopSystem = new ShopSystem(this.pokemonManager, this, this.imageManager);
             this.battleSystem = new BattleSystem(this.pokemonManager, this, this.imageManager);
+            this.locationSystem = new LocationSystem(this);
             this.uiManager = new UIManager(this, this.imageManager);
             this.animationManager = new AnimationManager();
+            this.mapModal = new MapModal(this, this.locationSystem);
+            this.questsPanel = new QuestsPanel(this, this.locationSystem);
             
             // 5. Подписываемся на события слияния
             this.pokemonManager.onMerge((mergeData) => {
@@ -91,6 +109,7 @@ class PokemonClickerGame {
                     `${mergeData.pokemon.name} достиг ${mergeData.newLevel} уровня!`,
                     'success'
                 );
+                this.locationSystem.updateQuestProgress('merge_pokemon', 1, mergeData);
             });
             
             // 6. Инициализируем UI
@@ -124,10 +143,8 @@ class PokemonClickerGame {
             // 12. Обновляем изображения покеболов
             await updatePokeballImages(this.imageManager);
             
-            // 13. Устанавливаем активную вкладку по умолчанию
-            if (this.uiManager.setActiveTab) {
-                this.uiManager.setActiveTab('collection');
-            }
+            // 13. Убираем кнопку команды из хедера и добавляем карту
+            this.updateHeaderButtons();
             
             this.isInitialized = true;
             console.log('✅ Игра успешно инициализирована!');
@@ -136,6 +153,44 @@ class PokemonClickerGame {
             console.error('❌ Ошибка инициализации игры:', error);
             // Показываем сообщение об ошибке пользователю
             this.showErrorMessage(error.message);
+        }
+    }
+    
+    updateHeaderButtons() {
+        // Удаляем кнопку команды
+        const teamButton = document.getElementById('team-menu');
+        if (teamButton) {
+            teamButton.remove();
+        }
+        
+        // Добавляем кнопку карты
+        const navButtons = document.querySelector('.nav-buttons');
+        if (navButtons) {
+            const mapButton = document.createElement('button');
+            mapButton.className = 'nav-btn';
+            mapButton.id = 'map-menu';
+            mapButton.innerHTML = '<i class="fas fa-map"></i><span>Карта</span>';
+            mapButton.addEventListener('click', () => {
+                this.mapModal.show();
+            });
+            navButtons.appendChild(mapButton);
+        }
+        
+        // Делаем слоты команды кликабельными
+        this.makeTeamSlotsClickable();
+    }
+    
+    makeTeamSlotsClickable() {
+        const teamSlots = document.getElementById('team-slots');
+        if (teamSlots) {
+            teamSlots.addEventListener('click', (e) => {
+                // Проверяем, кликнули ли на слот (не на пустой)
+                const slot = e.target.closest('.team-slot:not(.empty)');
+                if (slot) {
+                    // Открываем окно управления командой
+                    this.uiManager.showModal('team');
+                }
+            });
         }
     }
     
@@ -259,6 +314,12 @@ class PokemonClickerGame {
             if (typeof GameSoundGenerator !== 'undefined') {
                 GameSoundGenerator.playAttack();
             }
+            
+            // Обновляем прогресс квеста
+            if (this.locationSystem) {
+                this.locationSystem.updateQuestProgress('defeat_enemies', 1);
+                this.locationSystem.updateQuestProgress('team_damage', result.damage);
+            }
         }
         
         if (result.defeated && result.reward) {
@@ -274,6 +335,11 @@ class PokemonClickerGame {
                     result.enemy,
                     this.battleSystem.currentEnemy
                 );
+            }
+            
+            // Обновляем прогресс квеста
+            if (this.locationSystem) {
+                this.locationSystem.updateQuestProgress('collect_money', result.reward);
             }
         }
         
